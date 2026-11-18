@@ -111,6 +111,19 @@ def verify(output):
         ['nm', '-D', '--defined-only', str(output / PUBLIC_LIBRARY)], text=True).splitlines() if line.split()}
     if set(PUBLIC_EXPORTS) - exports:
         raise ValueError('public exports missing: ' + repr(sorted(set(PUBLIC_EXPORTS) - exports)))
+    if 'affine' in manifest:
+        affine=manifest['affine']
+        path=affine.get('runtime_receipt')
+        if path!='quactlize-runtime/affine.json' or path not in manifest['payloads']:
+            raise ValueError('invalid affine runtime receipt')
+        receipt=json.loads((output/path).read_text())
+        if (receipt.get('arch')!=arch or
+                receipt.get('library_sha256')!=manifest['payloads'][PUBLIC_LIBRARY] or
+                affine.get('supported')!=(arch=='ppu_10') or
+                sorted(map(int,receipt['configurations']))!=affine.get('configs') or
+                receipt['source_sha256'].get('quactlize/affine/selection.py')!=
+                manifest['source_hashes'].get('quactlize/affine/selection.py')):
+            raise ValueError('affine selector/runtime closure differs')
     if 'final_selection' in manifest:
         receipt = manifest['final_selection']
         if receipt['path'] != 'quactlize-runtime/final-selection.json' or receipt['path'] not in manifest['payloads']:
@@ -201,8 +214,13 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
     runtime = output / 'quactlize-runtime'
     runtime.mkdir()
     start = time.monotonic()
-    public_sources = {p: sha(p) for directory in ('quactlize/dense', 'quactlize/dispatch', 'quactlize/moe', 'quactlize/routing', 'quactlize/ffn', 'quactlize/fusion', 'quactlize/compat')
+    public_sources = {p: sha(p) for directory in ('quactlize/dense', 'quactlize/dispatch', 'quactlize/moe', 'quactlize/routing', 'quactlize/ffn', 'quactlize/fusion', 'quactlize/compat', 'quactlize/affine')
                       for p in (ROOT / directory).iterdir() if p.is_file()}
+    from tools.build_affine import build as build_affine
+    from quactlize.affine.selection import PRODUCTION_CONFIGS
+    affine_work=work/'affine'
+    build_affine(sdk,affine_work,list(PRODUCTION_CONFIGS) if arch=='ppu_10' else [],jobs,arch=arch)
+    affine_receipt=json.loads((affine_work/'manifest.json').read_text())
     public_sources.update({p: sha(p) for p in (ROOT/'policies').iterdir() if p.suffix in ('.hpp', '.json')})
     for name in ('native16.cuh','native16_geometry.hpp'):
         p=ROOT/'quactlize/execution'/name
@@ -294,11 +312,17 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
             'quactlize/moe/scaffold.cu','quactlize/routing/route.cu','quactlize/ffn/ffn.cpp',
             'quactlize/ffn/dense_swiglu.cu', *compatibility_sources(arch))))
     objects += [work / 'packing' / (name + '.o') for name in ('sizes.cpp', 'ppu_pack.cu')]
+    objects += [Path(path) for path in affine_receipt['objects']]
     run('public', ['g++', '-shared', '-pthread', '-Wl,-Bsymbolic', '-Wl,-z,defs',
         '-Wl,-soname,' + PUBLIC_LIBRARY, '-Wl,-rpath,$ORIGIN/quactlize-runtime',
         *map(str, objects), '-L' + str(runtime), '-lquactlize_kpack_dispatch',
         '-lquactlize_ppu_execution', '-lquactlize_ppu_prefill', '-L' + str(sdk / 'lib'),
         *['-l' + name for name in LIBRARIES], '-ldl', '-o', str(output / PUBLIC_LIBRARY)])
+    affine_receipt.update(
+        module_library_sha256=affine_receipt['library_sha256'],module_binary_shipped=False,
+        library=PUBLIC_LIBRARY,library_sha256=sha(output/PUBLIC_LIBRARY),
+        scope='PUBLIC_QUERY_PREPARE_RUN; performance admission requires paired device evidence')
+    (runtime/'affine.json').write_text(json.dumps(affine_receipt,indent=2)+'\n')
     headers = {
         'quactlize/packing/api.h': 'quactlize/packing/api.h',
         'quactlize/dense/api.h': 'quactlize/dense/api.h',
@@ -306,6 +330,7 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         'quactlize/ffn/api.h': 'quactlize/ffn/api.h',
         'quactlize/compat/api.h': 'quactlize/compat/api.h',
         'quactlize/compat/serving.h': 'quactlize/compat/serving.h',
+        'quactlize/affine/api.h': 'quactlize/affine/api.h',
         'quactlize/include/quactlize_ppu_config.h': 'quactlize_ppu_config.h',
     }
     for source, target in headers.items():
@@ -321,6 +346,10 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         build_info=provenance,
         payloads=payloads, commands=commands, jit_source_contract=contract, arch=arch,
         sdk=compiler.sdk_identity, formats=[8, 10, 11, 12, 13, 14],
+        affine=dict(supported=arch=='ppu_10',abi=1,group_size=32,
+            runtime_receipt='quactlize-runtime/affine.json',
+            configs=sorted(map(int,affine_receipt['configurations'])),
+            performance_admitted=False,device_admission='PENDING'),
         packing=dict(canonical_formats=[7, 8, 10, 11, 12, 13, 14, 42],
             q5_1=dict(mapping_id=0x5135314b50000001,n_alignment=16,k_alignment=128),
             q8_0=dict(mapping_id=0x51384b5032540001,n_alignment=256,k_alignment=32)),

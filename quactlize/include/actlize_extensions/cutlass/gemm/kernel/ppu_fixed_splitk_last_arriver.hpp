@@ -111,6 +111,8 @@ struct LastArriverM1Fp16Completion {
     return lhs_end <= rhs_begin || rhs_end <= lhs_begin;
   }
 
+ public:
+  // Shared by completion policies that use the same publication protocol.
   CUTLASS_DEVICE static int32_t load_acquire(int32_t* pointer) {
 #if defined(__HGGC_ARCH__) && (__HGGC_ARCH__ >= 100)
     int32_t value = 0;
