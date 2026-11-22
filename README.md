@@ -7,8 +7,13 @@ Humming, is now maintained in [FlashQuant](https://github.com/DrXuQian/FlashQuan
 For that API use `flashquant.affine` and link `libflashquant.so`; the C symbol
 names remain unchanged. GGUF users still use `quactlize` and `libncp_quactlize.so`.
 
-[SIMT GEMV](quactlize/simt_gemv/) owns the CUDA-core weight readers and
-kernels; Tensor Core decode remains in `quactlize/decode/`.
+To trace a llama.cpp call, start at [Dense](quactlize/dense/runtime.cpp) or
+[MoE](quactlize/moe/matmul.cpp); [FFN](quactlize/ffn/ffn.cpp) composes the same projections.
+Prepare chooses a recipe in [dispatch](quactlize/dispatch/). Run uses the prepared plan:
+[SIMT readers](quactlize/simt_gemv/), [dense](quactlize/runtime/dense_dynamic.cuh) or
+[grouped](quactlize/runtime/grouped_dynamic.cuh) TC launchers, or dense
+[full dequant + GEMM](quactlize/prefill/dense_runtime.cpp). The TC launchers share
+[kernel types](quactlize/runtime/kernel_types.cuh); [decode](quactlize/decode/) holds the typed decode adapters.
 
 PPU1.0 ZW610 and ZW810E reuse ZW810's exact selection tables and buckets.
 Recorded latencies remain ZW810 measurements, used as selection estimates on
@@ -74,6 +79,7 @@ Maintain the evidence, not the generated C++ tables. After an admitted change
 to `policies/dense_prefill_v1.json`, run `python3 -m quactlize.dispatch.dense_prefill`.
 For decode, run `python3 tools/generate_decode_selection.py`; it keeps exact
 choices and off-grid donors distinct but stores each reader/TC recipe only once.
+The same command regenerates the exact token-CTA bindings; add `--check` to verify without writing.
 
 The additive native16 [Flash-Next serving ABI](docs/serving.md) provides raw
 GGUF matmul, device-count router/row lookup and explicit SwiGLU rounding.

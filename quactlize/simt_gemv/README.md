@@ -3,6 +3,12 @@
 This is the source directory for CUDA-core weight-only GEMV, not the
 selector for all small M. A decode shape may still choose a Tensor Core.
 
+For automatic K-pack GEMV, start at [the small-M selector](../dispatch/smallm_matched.hpp),
+then [the SIMT launcher](simt_codegen.py) or the [Q4 S1 reader](q4_decode_kernel.cuh).
+The token-CTA device body is kept byte-identical to its measurement (including
+its candidate-era comment); [the exact-key bindings](token_cta.inc) determine
+where it runs today. A neighboring bucket does not enable that specialization.
+
 | Path | Input / role |
 | --- | --- |
 | `gemv.cu`, `simt_*`, `q4_*` | K-pack dense and indexed GEMV: general, measured and token-CTA readers; includes Q4 decode specializations. |

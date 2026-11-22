@@ -163,20 +163,28 @@ def implementations(evidence):
 
 def main():
     import argparse
+    from quactlize.simt_gemv import token_cta_policy
     from tools import paired_decode_selection as paired
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
+
+    def emit(path, text):
+        if path.is_file() and path.read_text() == text:
+            return
+        if args.check:
+            raise ValueError('stale generated selection: ' + str(path))
+        path.write_text(text)
+
     evidence = json.loads(EVIDENCE.read_text())
+    # The MoE evidence verifier checks this dense-only include against its
+    # generator before building the final selector. Restore that input first.
+    emit(token_cta_policy.CATALOG, token_cta_policy.catalog())
     policy = effective(evidence)
     outputs = ((OUTPUT, header(policy)), (IMPLEMENTATIONS, implementations(evidence)),
                (paired.OUTPUT, paired.header(json.loads(paired.EVIDENCE.read_text()))))
     for path, text in outputs:
-        if args.check:
-            if path.read_text() != text:
-                raise ValueError('stale generated selection: ' + str(path))
-        else:
-            path.write_text(text)
+        emit(path, text)
     print(f'DECODE_SELECTION_GENERATED exact={len(policy["exact"])} buckets={len(policy["buckets"])}')
 
 
