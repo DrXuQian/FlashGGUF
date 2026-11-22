@@ -1,35 +1,9 @@
-# FlashGGUF MNK13 · ZW810
+# MNK13 measurement protocol
 
-On an idle ZW810 with the usual PPU-enabled Python (numpy, torch, gguf), HGCC,
-g++, ppu-smi and Asys. No checkout, GGUF model, llama.cpp, submodule update or
-network is needed. Extract the archive in a fresh directory; leave it in place
-for resume. Start from its flashgguf-mnk13 directory:
+From the root of this Git checkout, run `bash run_mnk13.sh --target zw810e --gpu 0 --confirm-idle` on an idle E card. The original card uses `--target zw810`. `--phase anchors` is a short first run; keep the emitted MNK13_RUN directory and add `--out /absolute/path` on resume. Do not reuse an output directory from another device or checkout.
 
-```bash
-python3 run.py --plan-only
-python3 -u run.py --gpu 0 --confirm-idle
-```
+13 identical frozen shapes on either SKU: 2 Q5_K anchors, 7 calibration shapes (including two Q4_K cases), 4 held-out Q5_K shapes. Never train on the holdout CSV. F32 endpoints, F16 operands, FP32 accumulation, rotating packed weights. Numerical evidence is required for both capture directions. Each complete call includes adapter, expansion, main, reducer and output as applicable. We average actual complete calls, not isolated stage minima. JIT, cuBLAS warmup and the first ring are outside the timed set.
 
-The default runs two historical anchors, seven calibration shapes, then four
-held-out shapes. Pass `--phase anchors` for just the bridge. To continue or
-resume use **the same** `--gpu` and add `--out /absolute/path/from/MNK13_RUN`.
-Set `--sdk PATH` only if PPU_SDK/the default is wrong; `--jobs 4` is the
-per-build concurrency. The runner requests 1700 MHz for the selected GPU;
-observed clocks are diagnostic, throttling is not an automatic failure.
+On ZW810 the same-recipe anchor order and historical duration (15% band) are checked before proceeding. On ZW810E those durations are a different device's measurements. Record which arm wins in each direction on the E card; flag disagreements without treating the historical winner as a pass/fail condition. Keep E measurements separate even if CU count, SDK and L2 match a ZW810. A failed numerical check or an incomplete capture is still an error.
 
-F32 endpoints, F16 operands, FP32 accumulation, rotating packed weights.
-Precision and separate adapter, expansion, main, reducer and output activities
-are checked inside actual calls. JIT, cuBLAS warmup and first ring are not
-timed. Forward and reverse Asys captures per point; CSV mean_us weights all
-complete calls, not a sum of stage minima. Two old per-route control pairs
-bridge historical results. By default an ordering change between the two
-directions or >15% absolute drift of a historical control pauses the all run;
-inspect anchor-check.json before optionally resuming with --allow-anchor-drift.
-This is a diagnostic, not a product performance threshold.
-
-Upload only the printed review.tgz. It contains CSVs, identity, numeric/timing
-receipts, clock diagnostics and error context; raw traces/SQLite/cache remain
-on the box. Holdout data live in a separate CSV: do not fit using those rows.
-A shipping dense-table miss does not assert that the product has no fallback;
-no unsupported comparator or historical measurement is assigned to that shape.
-This is not a llama.cpp/model/decode/MoE benchmark or a change to any selector.
+The clock-lock receipt records the 1700 MHz request. The profiler samples real clocks around each capture. If the E board denies the request, the run is explicitly labelled REQUEST_DENIED and cannot be combined with a REQUEST_ACCEPTED review. Upload only review.tgz; traces and SQLite remain on the box. No selector, kernel, model or ABI is modified.

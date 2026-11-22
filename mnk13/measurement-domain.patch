@@ -1,0 +1,40 @@
+--- a/tools/run_prefill_model_asys.py
++++ b/tools/run_prefill_model_asys.py
+@@ -550,10 +550,19 @@
+             authority['source_revision']=plan['source_revision']
+         if a.finalist_plan and finalists.get('model_tuning'):
+             authority['source']=plan['source_identity']
++        clock=request_lock(a.smi,pci,1700);atomic_json(a.output/('clock-lock-'+str(time.time_ns())+'.json'),clock)
++        if plan.get('schema') == 'flashgguf.dense-mnk13.v1':
++            target = os.environ.get('FLASHGGUF_MNK13_TARGET')
++            if target not in ('zw810','zw810e'):
++                raise ValueError('MNK13 needs the validated physical target from run.py')
++            authority['mnk13_target'] = target
++            authority['mnk13_clock_lock'] = 'REQUEST_ACCEPTED' if not clock['returncode'] else 'REQUEST_DENIED'
++        if clock['returncode']:
++            if authority.get('mnk13_target') != 'zw810e':
++                raise ValueError('1700MHz lock request failed; see clock-lock receipt')
++            print('MNK13_CLOCK: 1700MHz request denied; recording actual clocks, E-card paired timings only',flush=True)
+         if old and old!=authority: raise ValueError('resume build/protocol changed')
+         if not old:atomic_json(a.output/'authority.json',authority)
+-        clock=request_lock(a.smi,pci,1700);atomic_json(a.output/('clock-lock-'+str(time.time_ns())+'.json'),clock)
+-        if clock['returncode']: raise ValueError('1700MHz lock request failed')
+         if a.helper_plan:
+             points=plan['points'];modules={}
+         else:
+--- a/tools/review_prefill_cohort.py
++++ b/tools/review_prefill_cohort.py
+@@ -335,9 +335,10 @@
+ def domain(authority):
+     d=authority['device'];card=d['device']
+     return dict(sdk=d['sdk'],l2_bytes=d['l2']['bytes'],requested_clock_mhz=1700,
+-        device={k:card[k] for k in ('compute_units','warp_size','max_threads','DriverGetVersion','RuntimeGetVersion')})
+-
+-
++        device={k:card[k] for k in ('compute_units','warp_size','max_threads','DriverGetVersion','RuntimeGetVersion')},
++        **({k:authority[k] for k in ('mnk13_target','mnk13_clock_lock')} if 'mnk13_target' in authority else {}))
++
++
+ def main():
+     p=argparse.ArgumentParser(description=__doc__)
+     p.add_argument('--run',type=Path,action='append',default=[])

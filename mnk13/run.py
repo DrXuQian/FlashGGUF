@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""13 fixed ZW810 dense-prefill route tests. No Git/network/model/policy update."""
+"""Test 13 fixed ZW810-rule dense-prefill shapes on a ZW810 or ZW810E."""
 import argparse
 import csv
 import fcntl
@@ -31,18 +31,40 @@ def save(path, value):
     tmp.replace(path)
 
 
-def check_card(sdk):
+def target_for(name, requested):
+    target = {"PPU-ZW810": "zw810", "ZW810": "zw810",
+              "PPU-ZW810E": "zw810e", "ZW810E": "zw810e"}.get(name.strip().upper())
+    if target is None or requested not in ("auto", target):
+        raise ValueError(f"requested {requested}, visible device is {name!r}; check --gpu")
+    return target
+
+
+def card_record(name, requested, d):
+    target = target_for(name, requested)
+    cu, warp, l2 = d["device"]["compute_units"], d["device"]["warp_size"], d["l2"]["bytes"]
+    # ZW810E shares ppu_10 kernels/recipe IDs, not ZW810's CU count, L2 or latency.
+    if (warp != 32 or cu <= 0 or l2 <= 0
+            or (target == "zw810" and (cu != 72 or l2 != 64 << 20))):
+        raise ValueError(f"unsupported {name} resources: CU={cu}, warp={warp}, L2={l2}")
+    return dict(name=name, target=target, rule_source="zw810", **d)
+
+
+def check_card(sdk, requested, verified_l2):
     # This process exits before the profiler starts; no retained Torch context.
     import torch
     from gguf.quants import dequantize  # noqa: F401
     from types import SimpleNamespace
     from tools.run_kpack_llama_ab import device
     name = torch.cuda.get_device_name(0)
-    d = device(SimpleNamespace(sdk=sdk, l2_bytes=67108864))
-    if (name.upper() not in ("PPU-ZW810", "ZW810") or d["device"]["compute_units"] != 72
-            or d["device"]["warp_size"] != 32 or d["l2"]["bytes"] != 67108864):
-        raise ValueError(f"this rule was calibrated for ZW810/72 CU/64 MiB L2, got {name}: {d}")
-    print("MNK13_DEVICE " + json.dumps(dict(name=name, **d)), flush=True)
+    target = target_for(name, requested)
+    # Zero tells the SDK probe to discover capacity, not to assume 64 MiB on E.
+    props = torch.cuda.get_device_properties(0)
+    torch_l2 = getattr(props, "L2_cache_size", 0) or getattr(props, "l2_cache_size", 0)
+    l2 = verified_l2 or ((64 << 20) if target == "zw810" else torch_l2)
+    d = device(SimpleNamespace(sdk=sdk, l2_bytes=l2))
+    if target == "zw810e" and torch_l2 and not verified_l2 and not d["l2"]["reported"]:
+        d["l2"]["source"] = "TORCH_DEVICE_PROPERTY"
+    print("MNK13_DEVICE " + json.dumps(card_record(name, requested, d)), flush=True)
 
 
 def logged(cmd, env, log):
@@ -60,9 +82,11 @@ def logged(cmd, env, log):
             raise RuntimeError(f"{Path(cmd[3]).name} rc={proc.returncode}; see {log}")
 
 
-def review_table(dest, stage, points):
+def review_table(dest, stage, points, target):
     from tools.review_prefill_cohort import ingest
     evidence = ingest(dest/stage)
+    if (len(evidence["authorities"]) != 1 or next(iter(evidence["authorities"].values()))["mnk13_target"] != target):
+        raise ValueError("capture was not collected for this target")
     if evidence["incomplete"] or set(evidence["points"]) != {p["id"] for p in points}:
         raise ValueError("not all frozen shapes have two confirmed samples")
     rows = []
@@ -76,7 +100,7 @@ def review_table(dest, stage, points):
             if r["status"] != "PASS" or [c["confirmation"] for c in cs] != [0, 1]:
                 raise ValueError("incomplete direction or numerical/launch drift")
             all_us = r["complete_samples_us"]
-            rows.append(dict(q=w["qtype"], M=w["m"], N=w["n"], K=w["k"], route=r["arm"],
+            rows.append(dict(measured_on=target, rule_source="zw810", q=w["qtype"], M=w["m"], N=w["n"], K=w["k"], route=r["arm"],
                              catalog_recipe=p["catalog_ids"][r["case_id"]], case_id=r["case_id"],
                              roles="|".join(r["roles"]), production_table_hit=int(p["incumbent"] is not None),
                              calls=len(all_us), mean_us=statistics.fmean(all_us),
@@ -92,8 +116,8 @@ def review_table(dest, stage, points):
     return rows
 
 
-def bridge(rows):
-    """Two old paired anchor winners + scale sanity. An SDK change may legitimately trip this."""
+def bridge(rows, target):
+    """Only a ZW810 run can bridge historical ZW810 microseconds."""
     result = []
     for n in (1024, 6144):
         controls = [r for r in rows if r["N"] == n and r["historical_control_us"] != ""]
@@ -101,9 +125,14 @@ def bridge(rows):
             raise ValueError("both same-recipe historical controls are required")
         old = min(controls, key=lambda r: r["historical_control_us"])["route"]
         wins = [min(controls, key=lambda r: r[col])["route"] for col in ("forward_mean_us", "reverse_mean_us")]
-        deltas = {r["route"]: 100*(r["mean_us"]/r["historical_control_us"]-1) for r in controls}
-        result.append(dict(n=n, historical=old, both_orders=wins, delta_pct=deltas,
-                           comparable=wins == [old, old] and all(abs(d) <= 15 for d in deltas.values())))
+        row = dict(n=n, measured_on=target, historical_device="zw810", historical=old, both_orders=wins,
+                   same_card_winner=wins[0] if wins[0] == wins[1] else None)
+        if target == "zw810":
+            deltas = {r["route"]: 100*(r["mean_us"]/r["historical_control_us"]-1) for r in controls}
+            row.update(delta_pct=deltas, comparable=wins == [old, old] and all(abs(d) <= 15 for d in deltas.values()))
+        else:
+            row.update(delta_pct=None, comparable=None, scope="E_CARD_PAIRED_ONLY_NO_ZW810_ABSOLUTE_GATE")
+        result.append(row)
     return result
 
 
@@ -137,7 +166,11 @@ def compact(dest):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--gpu", type=int, default=0, help="one physical ZW810 ordinal")
+    p.add_argument("--gpu", type=int, default=0, help="one physical GPU ordinal")
+    p.add_argument("--target", choices=("auto", "zw810", "zw810e"), default="auto",
+                   help="check the actual SKU; E reuses candidates, not historical timings")
+    p.add_argument("--l2-bytes", type=int, default=0,
+                   help="only needed when the SDK reports zero: supply independently verified physical L2 bytes")
     p.add_argument("--sdk", type=Path, default=Path(os.environ.get("PPU_SDK", "/usr/local/PPU_SDK")))
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--phase", choices=("all", *STAGES), default="all")
@@ -149,17 +182,17 @@ def main():
     a = p.parse_args()
     sys.path.insert(0, str(SRC))
     if a.check_card:
-        check_card(a.sdk)
+        check_card(a.sdk, a.target, a.l2_bytes)
         return 0
-    if a.gpu < 0 or not 1 <= a.jobs <= 64:
-        p.error("nonnegative ordinal and 1..64 compiler jobs required")
+    if a.gpu < 0 or a.l2_bytes < 0 or not 1 <= a.jobs <= 64:
+        p.error("nonnegative ordinal/L2 and 1..64 compiler jobs required")
     identity = read(KIT/"identity.json")
     for name, expected in identity["files"].items():
         path = KIT/name
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
             raise ValueError("kit payload changed: " + name)
     plan = read(KIT/"plan.json")
-    print("MNK13_PLAN", plan["counts"], "stages=anchors:2 fit:7 holdout:4", flush=True)
+    print("MNK13_PLAN", plan["counts"], "target="+a.target, "stages=anchors:2 fit:7 holdout:4", flush=True)
     phases = STAGES if a.phase == "all" else (a.phase,)
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
                OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", CUDA_VISIBLE_DEVICES=str(a.gpu))
@@ -206,21 +239,25 @@ def main():
         save(out/"plan.json", plan)
         tic = time.monotonic()
         try:
-            logged([sys.executable, "-B", "-u", __file__, "--check-card", "--sdk", str(sdk)], env, out/"preflight.log")
+            logged([sys.executable, "-B", "-u", __file__, "--check-card", "--sdk", str(sdk),
+                    "--target", a.target, "--l2-bytes", str(a.l2_bytes)], env, out/"preflight.log")
             device = json.loads(next(line[len("MNK13_DEVICE "):] for line in reversed((out/"preflight.log").read_text().splitlines())
                                      if line.startswith("MNK13_DEVICE ")))
             if (out/"device.json").exists() and read(out/"device.json") != device:
                 raise ValueError("physical card/SDK changed; start a new output rather than splicing old captures")
             save(out/"device.json", device)
+            target = device["target"]
+            env["FLASHGGUF_MNK13_TARGET"] = target
             for stage in phases:
                 points, ids = subset(stage)
-                if stage != "anchors" and (out/"anchor-check.json").exists() and not a.allow_anchor_drift:
+                if target == "zw810" and stage != "anchors" and (out/"anchor-check.json").exists() and not a.allow_anchor_drift:
                     if not all(r["comparable"] for r in read(out/"anchor-check.json")):
                         save(out/"status.json", dict(status="PAUSED_AFTER_VALID_ANCHORS", next_phase=stage))
                         print("MNK13_PAUSED: see anchor-check.json; inspect before continuing with --allow-anchor-drift.")
                         return 2
                 folder = out/stage
-                cmd = [*common, *ids, "--sdk", str(sdk), "--confirm-idle", "--output", str(folder), "--cache", str(out/"jit")]
+                cmd = [*common, *ids, "--sdk", str(sdk), "--l2-bytes", str(device["l2"]["bytes"]),
+                       "--confirm-idle", "--output", str(folder), "--cache", str(out/"jit")]
                 if folder.exists():
                     cmd.append("--resume")
                 setup = out/(stage+"-setup.json")
@@ -230,12 +267,12 @@ def main():
                     cmd += ["--reuse-build", str(out/"anchors/build")]
                 print(f"MNK13_START phase={stage} shapes={len(points)}", flush=True)
                 logged(cmd, env, out/(stage+".log"))
-                rows = review_table(out, stage, points)
+                rows = review_table(out, stage, points, target)
                 if stage == "anchors":
-                    result = bridge(rows)
+                    result = bridge(rows, target)
                     save(out/"anchor-check.json", result)
                     print("MNK13_ANCHORS", json.dumps(result), flush=True)
-            save(out/"status.json", dict(status="PASS", phases=phases, seconds=time.monotonic()-tic,
+            save(out/"status.json", dict(status="PASS", measured_on=target, rule_source="zw810", phases=phases, seconds=time.monotonic()-tic,
                                          scope="PAIRED_ASYS_MEASUREMENT_NOT_PRODUCTION_ADMISSION"))
             return 0
         except (Exception, KeyboardInterrupt) as exc:
