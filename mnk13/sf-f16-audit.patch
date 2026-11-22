@@ -1,0 +1,139 @@
+--- a/quactlize/dequant/native.py
++++ b/quactlize/dequant/native.py
+@@ -58,11 +58,15 @@
+                 useful_bytes=reads+writes)
+
+
+-def verify(bundle, sdk):
++def verify(bundle, sdk, *, sf_f16_only=False):
+     bundle, sdk = Path(bundle).resolve(strict=True), Path(sdk).resolve(strict=True)
+     m=json.loads((bundle/'manifest.json').read_text())
+     if m.get('schema')!='quactlize.dequant-only.v1' or m['timing']!='NO_GEMM':
+         raise ValueError('dequant manifest schema/scope differs')
++    # An older/full audit is sufficient for SF. An SF-only receipt is never BF16 evidence.
++    allowed = ('FULL','SF_FP16_ONLY') if sf_f16_only else ('FULL',)
++    if m.get('isa_scope','FULL') not in allowed:
++        raise ValueError('dequant ISA audit scope differs: '+str(m.get('isa_scope')))
+     if m['library']!='libquactlize_ppu_dequant.so' or sha(bundle/m['library'])!=m['sha256']:
+         raise ValueError('dequant payload differs')
+     if sha(bundle/'native.json')!=m['native_sha256']:
+--- a/tools/build_kpack_dequant.py
++++ b/tools/build_kpack_dequant.py
+@@ -56,7 +56,7 @@
+     return result
+
+
+-def inspect_image(sdk, image):
++def inspect_image(sdk, image, *, sf_f16_only=False):
+     """Same native checks on a linked library or a compile-only test object."""
+     isa=subprocess.run([str(sdk/'bin/hgobjdump'),'--dump-isa',str(image)],
+                        check=True,capture_output=True,text=True).stdout
+@@ -69,10 +69,20 @@
+         body=isa[entry.end():entries[i+1].start() if i+1<len(entries) else None]
+         ops=Counter(re.findall(r'\t([a-z][\w.]+)\s',body))
+         symbol=entry[1]
++        # This DSO's FP16 SF entries write scale/zero. Its full and typed-BF16
++        # entries are separate kernels; the timed Full-F16 provider is in another DSO.
++        audit = not sf_f16_only or any(x in symbol for x in ('prepass_unit_kernel','sf_columns','sf_unit16'))
++        native[symbol]=dict(operations=dict(sorted(ops.items())),resources=resources[symbol],
++                            scope='STATIC_COUNTS_NOT_DYNAMIC_PROFILE',isa_checked=audit)
++        if not audit:
++            continue
++        if not ops:
++            raise ValueError(f'no native instructions parsed: {symbol} in {image}')
+         if any(x in symbol for x in ('full_transpose','sf_columns','full_wide','sf_unit16','full_shared','full_packed_exchange')) and any('f64' in op for op in ops):
+             raise ValueError('coordinate decomposition unexpectedly uses FP64 division lowering')
+         if any(x in symbol for x in ('full_transpose','full_direct','full_wide','full_shared','full_packed_exchange','sf_bfloat_units')) and not native_bf16_output(ops):
+-            raise ValueError('native BF16 output conversion missing')
++            conversions=sorted(op for op in ops if 'cvt' in op or 'cnvt' in op or 'bf16' in op)
++            raise ValueError(f'native BF16 output conversion missing: {symbol} in {image}; conversion ops={conversions}')
+         if 'sf_unit16' in symbol and (ops['vmem.ld.b32x4']!=1 or any(op.startswith('vmem.ld.b8') for op in ops)):
+             raise ValueError('metadata uint4 load was scalarized')
+         if 'full_wide' in symbol and 'ELb1EE' in symbol and not any(op.startswith('vmem.st.b32x4') for op in ops):
+@@ -81,12 +91,11 @@
+             for kind in ('vmem.ld.b32x4','tsm.ld.b32x4','vmem.st.b32x4'):
+                 if not any(op.startswith(kind) for op in ops):raise ValueError('shared-vector path was scalarized: '+kind)
+             if resources[symbol]['stack_bytes']:raise ValueError('new shared reader has a local stack allocation')
+-        native[symbol]=dict(operations=dict(sorted(ops.items())),resources=resources[symbol],scope='STATIC_COUNTS_NOT_DYNAMIC_PROFILE')
+     if set(native)!=set(resources):raise ValueError('ISA and resource kernel sets differ')
+     return native,inventory
+
+
+-def build(sdk, output):
++def build(sdk, output, *, sf_f16_only=False):
+     sdk, output = sdk.resolve(strict=True), output.resolve()
+     output.mkdir(parents=True, exist_ok=False)
+     paths = [ROOT/'quactlize/dequant', ROOT/'quactlize/execution',
+@@ -108,7 +117,7 @@
+             subprocess.run(command, check=True, env=env, stdout=log, stderr=subprocess.STDOUT)
+     if any(sha(ROOT/p)!=h for p,h in inputs.items()):
+         raise ValueError('dequant sources changed during compilation')
+-    native,inventory=inspect_image(sdk,output/'libquactlize_ppu_dequant.so')
++    native,inventory=inspect_image(sdk,output/'libquactlize_ppu_dequant.so',sf_f16_only=sf_f16_only)
+     (output/'native.json').write_text(json.dumps(native,indent=2)+'\n')
+     manifest = dict(schema='quactlize.dequant-only.v1', source_hashes=inputs,
+         library='libquactlize_ppu_dequant.so', sha256=sha(output/'libquactlize_ppu_dequant.so'),
+@@ -122,10 +131,12 @@
+         full_output='BF16_E_N_K', full_arithmetic='RAW_GGUF_FP32_MUL_SUB_BF16_RNE',
+         sf_output='FP16_E_GROUP_N_TWO_PLANES', timing='NO_GEMM')
+     manifest['native_sha256']=sha(output/'native.json')
++    manifest['isa_scope']='SF_FP16_ONLY' if sf_f16_only else 'FULL'
+     manifest['native_inventory']=inventory
+     manifest['inspector_sha256']=sha(sdk/'bin/hgobjdump')
+     (output/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+-    print('KPACK_DEQUANT_BUILD',json.dumps(dict(seconds=manifest['seconds'],library=str(output/manifest['library']))))
++    print('KPACK_DEQUANT_BUILD',json.dumps(dict(seconds=manifest['seconds'],library=str(output/manifest['library']),
++                                                isa_scope=manifest['isa_scope'])))
+
+
+ if __name__ == '__main__':
+--- a/tools/run_prefill_model_asys.py
++++ b/tools/run_prefill_model_asys.py
+@@ -47,11 +47,16 @@
+     return digest(files)
+
+
++def mnk13_f16_sf_only(a):
++    return a.no_native and read(a.output/'plan.json').get('schema') == 'flashgguf.dense-mnk13.v1'
++
++
+ def validate_payload(a):
+     from dev.strategy.prefill_build import verify
+     from quactlize.dequant.native import verify as dequant_verify
+     payload = a.reuse_build or a.output/'build'
+-    hp, dq = verify(a.sdk,payload/'helpers'), dequant_verify(payload/'dequant',a.sdk)
++    hp = verify(a.sdk,payload/'helpers')
++    dq = dequant_verify(payload/'dequant',a.sdk,sf_f16_only=mnk13_f16_sf_only(a))
+     for name,value in dq['source_hashes'].items():
+         if sha(ROOT/name) != value: raise ValueError('dequant source changed: '+name)
+     from tools.build_kpack_prefill_runtime import verify as verify_dense
+@@ -508,7 +513,8 @@
+             failed=a.output/'build'
+             if failed.is_symlink() or not failed.is_dir():raise ValueError('unexpected helper build path')
+             failed.rename(a.output/('build-failed-'+str(time.time_ns())))
+-        receipt=read(a.output/'build/receipt.json') if (a.output/'build/receipt.json').exists() else build(a)
++        receipt=read(a.output/'build/receipt.json') if (a.output/'build/receipt.json').exists() else build(
++            a,sf_f16_only=mnk13_f16_sf_only(a))
+         from tools.build_kpack_prefill_runtime import build as build_dense
+         if not (a.output/'build/dense/manifest.json').exists():
+             if paired and (a.output/'build/dense').exists():
+--- a/tools/run_prefill_point.py
++++ b/tools/run_prefill_point.py
+@@ -63,7 +63,7 @@
+     return names
+
+
+-def build(args):
++def build(args, *, sf_f16_only=False):
+     from dev.native_components.build import run_commands
+     from dev.prefill_point.build import build_native
+     from tools.run_native_components import environment
+@@ -79,7 +79,7 @@
+         adapter, binary, receipt = build_native(args, target/'native', environment(args))
+     if not reuse:
+         helpers(args.sdk, target/'helpers')
+-        dequant(args.sdk, target/'dequant')
++        dequant(args.sdk, target/'dequant', sf_f16_only=sf_f16_only)
+     include = args.sdk/'include'
+     if not (include/'hggc_runtime_api.h').is_file():
+         include = args.sdk/'targets/x86_64-linux/include'

@@ -16,7 +16,7 @@ import tempfile
 import time
 
 KIT = Path(__file__).resolve().parent
-SRC = KIT / "source"
+SRC = KIT / ".source-f16-v3"
 RUNNER = SRC / "tools/run_prefill_model_asys.py"
 STAGES = ("anchors", "fit", "holdout")
 
@@ -188,7 +188,7 @@ def main():
         p.error("nonnegative ordinal/L2 and 1..64 compiler jobs required")
     identity = read(KIT/"identity.json")
     for name, expected in identity["files"].items():
-        path = KIT/name
+        path = SRC/name[len("source/"):] if name.startswith("source/") else KIT/name
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
             raise ValueError("kit payload changed: " + name)
     plan = read(KIT/"plan.json")

@@ -14,16 +14,20 @@ import unittest
 from unittest.mock import patch
 
 kit = Path(sys.argv.pop(1)).resolve(strict=True)
-sys.path.insert(0, str(kit/"source"))
 spec = importlib.util.spec_from_file_location("mnk13_test_runner", kit/"run.py")
 run = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(run)
+sys.path.insert(0, str(run.SRC))
 from dev.prefill_asys.finalists import load
 from dev.strategy.resources import inventory
 from quactlize.runtime.compiler import Compiler
 from quactlize.runtime.tuning import digest
 from tools.run_prefill_model_asys import confirmation_jobs
+from tools.run_prefill_model_asys import mnk13_f16_sf_only
 from tools.review_prefill_cohort import domain
+from tools.build_kpack_dequant import inspect_image
+from quactlize.dequant.native import verify as verify_dequant
+from quactlize.runtime.compiler import sha
 
 
 class KitTest(unittest.TestCase):
@@ -133,6 +137,67 @@ class KitTest(unittest.TestCase):
                 run.check_card(Path("/sdk"),"zw810e",0)
             self.assertEqual(probe.call_args.args[0].l2_bytes,32<<20)
             self.assertEqual(json.loads(log.getvalue().split(" ",1)[1])["l2"]["source"],"TORCH_DEVICE_PROPERTY")
+
+    def test_sf_audit_only_for_mnk13_without_native(self):
+        with tempfile.TemporaryDirectory() as t:
+            args = SimpleNamespace(output=Path(t),no_native=True)
+            run.save(args.output/"plan.json",self.plan)
+            self.assertTrue(mnk13_f16_sf_only(args))
+            self.assertEqual({p["workload"]["compute"] for p in self.plan["points"]},{"f16"})
+            self.assertEqual({c["arm"] for p in self.plan["points"] for c in p["cases"]},{"sf","fq","full-fp16"})
+            args.no_native=False
+            self.assertFalse(mnk13_f16_sf_only(args))
+            args.no_native=True
+            run.save(args.output/"plan.json",{"schema":"quactlize.dense-m-span.v1"})
+            self.assertFalse(mnk13_f16_sf_only(args))
+
+    def test_unused_bf16_is_not_an_fp16_sf_gate(self):
+        # Simulated hgobjdump output for the actual family counts. FP16x2 is
+        # deliberately not evidence for a BF16 conversion in a strict audit.
+        symbols = [f"{family}_{i}" for family,count in [
+            ("prepass_unit_kernel",5),("sf_columns",10),("sf_unit16",4),("full_direct",5),
+            ("full_wide",15),("full_transpose",10),("full_shared",8),("full_packed_exchange",6)]
+            for i in range(count)]
+        symbols += [f"sf_bfloat_units_FmtE{i}E_ELi{threads}E" for i in range(5) for threads in (128,256)]
+        def check(sf_only, *, vector="vmem.ld.b32x4", omit=None):
+            isa = "".join(f"Disassembly of section .text.kernel.{s}:\n\t{vector} v0\n\tv.pcnvt.f16x2 v1\n"
+                          for s in symbols if s != omit)
+            resources = "".join(f"Func {i} {s} RESOURCE INFO:\nvreg_number: 16\nsreg_number: 1\n"
+                                "shared_memory_size: 0\nSTACK SIZE: 0\n" for i,s in enumerate(symbols))
+            with patch("subprocess.run",side_effect=[SimpleNamespace(stdout=isa),SimpleNamespace(stdout=resources)]):
+                return inspect_image(Path("/sdk"),Path("/image.so"),sf_f16_only=sf_only)
+        with self.assertRaisesRegex(ValueError,"native BF16 output conversion missing: full_direct_0"):
+            check(False)
+        native,_ = check(True)
+        self.assertEqual(len(native),73)
+        self.assertEqual(sum(r["isa_checked"] for r in native.values()),19)
+        self.assertEqual(native["full_direct_0"]["operations"]["v.pcnvt.f16x2"],1)
+        self.assertFalse(native["full_direct_0"]["isa_checked"])
+        with self.assertRaisesRegex(ValueError,"scalarized"):
+            check(True,vector="vmem.ld.b8")
+        with self.assertRaisesRegex(ValueError,"inventory differs"):
+            check(True,omit="full_direct_0")
+
+    def test_sf_receipt_never_validates_for_bf16(self):
+        with tempfile.TemporaryDirectory() as t:
+            root=Path(t)
+            lib=root/"libquactlize_ppu_dequant.so"
+            lib.write_bytes(b"test fixture")
+            run.save(root/"native.json",{})
+            manifest=dict(schema="quactlize.dequant-only.v1",timing="NO_GEMM",library=lib.name,
+                          sha256=sha(lib),native_sha256=sha(root/"native.json"),runtime={})
+            for scope in (None,"FULL","SF_FP16_ONLY","UNKNOWN"):
+                run.save(root/"manifest.json",manifest if scope is None else dict(manifest,isa_scope=scope))
+                for sf_only in (True,False):
+                    if scope in (None,"FULL") or (sf_only and scope=="SF_FP16_ONLY"):
+                        self.assertEqual(verify_dequant(root,root,sf_f16_only=sf_only)["sha256"],sha(lib))
+                    else:
+                        with self.assertRaisesRegex(ValueError,"ISA audit scope differs"):
+                            verify_dequant(root,root,sf_f16_only=sf_only)
+            run.save(root/"manifest.json",dict(manifest,isa_scope="SF_FP16_ONLY"))
+            lib.write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError,"payload differs"):
+                verify_dequant(root,root,sf_f16_only=True)
 
 
 if __name__ == "__main__":
