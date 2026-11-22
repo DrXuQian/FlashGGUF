@@ -1,0 +1,4871 @@
+{
+ "counts": {
+  "captures": 26,
+  "configs": 39,
+  "families": 9,
+  "modules": 5,
+  "points": 13,
+  "queries": 28,
+  "timed_arms": 78
+ },
+ "inputs": {
+  "catalog": "c32932e0b903548069abb6ea254ea37429335bc8060ec352d9ad8da354303100",
+  "helper_policy_sha256": "2c4c9c917e924a8a9bc4b6591caea17854ee754110a847fe92b06bd686a31a12",
+  "model_sha256": "1feb644523ceff28090039ed5fc0134348e6fc8a8f7c28838935c101c891e136"
+ },
+ "native_comparison": false,
+ "performance_admitted": false,
+ "points": [
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full",
+      "historical-control"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config",
+      "historical-control"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {
+    "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031": 31.153757936507937,
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": 45.904043650793646
+   },
+   "id": "85ce716aae1c426203c242040369287ce8c102da16d146c2f49767312e9bf093",
+   "incumbent": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+   "native_comparison": false,
+   "stage": "anchors",
+   "table_policy": 20,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 5120,
+    "k": 5120,
+    "m": 256,
+    "n": 1024,
+    "operation": "dense",
+    "output_stride": 1024,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full",
+      "model-config",
+      "historical-control"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "historical-control"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": 119.45835714285715,
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": 107.66635714285715
+   },
+   "id": "9cbe4a85cab904db1f8d4ecf555e3fb4ed6d367821a8185673d96af1804af273",
+   "incumbent": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1",
+   "native_comparison": false,
+   "stage": "anchors",
+   "table_policy": 20,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 5120,
+    "k": 5120,
+    "m": 256,
+    "n": 6144,
+    "operation": "dense",
+    "output_stride": 6144,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "2f2acb8c6c75b3f63b2005a329f6ca05393f6785e0803978988618573c0b70f8",
+   "incumbent": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 21,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 5120,
+    "k": 5120,
+    "m": 256,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "e26eba11af8c0f54437f68ae684dc43c4a2f1a830ee423b617421c9625c2d27d",
+   "incumbent": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 21,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 5120,
+    "k": 5120,
+    "m": 384,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "c477d9cd193a5a711d80e044dda57c1f64921cf0c74fd39b947702af79bdba16",
+   "incumbent": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 21,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 5120,
+    "k": 5120,
+    "m": 512,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf-alternate"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "55d4dcde75387e03546920b541b8ddb9cc633bdc96a9b68ac1e56a3249bb2e75",
+   "incumbent": null,
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 0,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 2560,
+    "k": 2560,
+    "m": 256,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "1e42156294067df4a02367c8df6a22bbb58b95a66ba2837a7e4745763ac6f584",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf-alternate"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "1e42156294067df4a02367c8df6a22bbb58b95a66ba2837a7e4745763ac6f584": "e60a7391857da1853a0a7599642aae125a2c7d23235f99e61ec07a0c018dfb26",
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "2b13ec78d956e459c058e147fc256ea547e636a31127eaa4e6f8393cb74b3317",
+   "incumbent": null,
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 0,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 10240,
+    "k": 10240,
+    "m": 256,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       4
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       4
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       16
+      ],
+      [
+       "tn",
+       32
+      ],
+      [
+       "wm",
+       16
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       -1
+      ],
+      [
+       "dn",
+       64
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       3
+      ],
+      [
+       "symbol",
+       "fqk_tc_q12_l1_a0_tm16_tn128_tk256_wm16_wn32_s3_bc0_ap0_dn64"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       16
+      ],
+      [
+       "tn",
+       128
+      ],
+      [
+       "wm",
+       16
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "fq"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       4
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       16
+      ],
+      [
+       "tn",
+       32
+      ],
+      [
+       "wm",
+       16
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "d3c1e2678c657aef755b2c262db4ed414f9dff28cf934dbc88cfabc87fe3f103",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        4
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        4
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        16
+       ],
+       [
+        "tn",
+        32
+       ],
+       [
+        "wm",
+        16
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "fq",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        -1
+       ],
+       [
+        "dn",
+        64
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        3
+       ],
+       [
+        "symbol",
+        "fqk_tc_q12_l1_a0_tm16_tn128_tk256_wm16_wn32_s3_bc0_ap0_dn64"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        16
+       ],
+       [
+        "tn",
+        128
+       ],
+       [
+        "wm",
+        16
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "fq"
+     },
+     "roles": [
+      "rule:fq",
+      "model-config",
+      "historical-control"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "214da4bee24237217086e403e940268ff77d33b02fdf112bc35070166a8ad6fe",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        4
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        16
+       ],
+       [
+        "tn",
+        32
+       ],
+       [
+        "wm",
+        16
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "historical-control"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "214da4bee24237217086e403e940268ff77d33b02fdf112bc35070166a8ad6fe": "83b35ad5e4bdc4e7c5549fa1084d6c052aeddeaf3472b554e522ceea656dcbe5",
+    "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63": "8076e1c43f94d1e4c2a06bec8dc7e9dcae5debdb1e27d35fb26eefb4175a916e",
+    "d3c1e2678c657aef755b2c262db4ed414f9dff28cf934dbc88cfabc87fe3f103": "6b38e694127d072ee4ff03cdcc84fd2c7f3384c45c1700ec12d3f2a30ae82fe9"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {
+    "214da4bee24237217086e403e940268ff77d33b02fdf112bc35070166a8ad6fe": 87.55235416666666,
+    "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63": 74.61139583333333
+   },
+   "id": "59ffa41460e3675231fd8840256b2f4070cf80b875ee2a8f504d5b9657fbe6ba",
+   "incumbent": "8076e1c43f94d1e4c2a06bec8dc7e9dcae5debdb1e27d35fb26eefb4175a916e",
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 20,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 17408,
+    "k": 17408,
+    "m": 16,
+    "n": 5120,
+    "operation": "dense",
+    "output_stride": 5120,
+    "qtype": 12,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       4
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       4
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       16
+      ],
+      [
+       "tn",
+       32
+      ],
+      [
+       "wm",
+       16
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       -1
+      ],
+      [
+       "dn",
+       64
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       3
+      ],
+      [
+       "symbol",
+       "fqk_tc_q12_l1_a0_tm16_tn128_tk256_wm16_wn32_s3_bc0_ap0_dn64"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       16
+      ],
+      [
+       "tn",
+       128
+      ],
+      [
+       "wm",
+       16
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "fq"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       4
+      ],
+      [
+       "dn",
+       64
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       12
+      ],
+      [
+       "split",
+       8
+      ],
+      [
+       "stages",
+       3
+      ],
+      [
+       "symbol",
+       "sf_q12_a0_tm64_tn64_tk64_wm64_wn32_s3_bc0_ap0_dn64"
+      ],
+      [
+       "tk",
+       64
+      ],
+      [
+       "tm",
+       64
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "d3c1e2678c657aef755b2c262db4ed414f9dff28cf934dbc88cfabc87fe3f103",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        4
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        4
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q12_a0_tm16_tn32_tk256_wm16_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        16
+       ],
+       [
+        "tn",
+        32
+       ],
+       [
+        "wm",
+        16
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "fq",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        -1
+       ],
+       [
+        "dn",
+        64
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        3
+       ],
+       [
+        "symbol",
+        "fqk_tc_q12_l1_a0_tm16_tn128_tk256_wm16_wn32_s3_bc0_ap0_dn64"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        16
+       ],
+       [
+        "tn",
+        128
+       ],
+       [
+        "wm",
+        16
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "fq"
+     },
+     "roles": [
+      "rule:fq",
+      "model-config",
+      "historical-control"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "5aa42ceda3e3076e1a7a6acdef558d13638a8eb3ef638de6fe98ea295b259414",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        4
+       ],
+       [
+        "dn",
+        64
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        12
+       ],
+       [
+        "split",
+        8
+       ],
+       [
+        "stages",
+        3
+       ],
+       [
+        "symbol",
+        "sf_q12_a0_tm64_tn64_tk64_wm64_wn32_s3_bc0_ap0_dn64"
+       ],
+       [
+        "tk",
+        64
+       ],
+       [
+        "tm",
+        64
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "historical-control"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "5aa42ceda3e3076e1a7a6acdef558d13638a8eb3ef638de6fe98ea295b259414": "dd39fb1b0262aa7b004ab776b7ca1fc9a53137f027fe361260d20752828a055f",
+    "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63": "8076e1c43f94d1e4c2a06bec8dc7e9dcae5debdb1e27d35fb26eefb4175a916e",
+    "d3c1e2678c657aef755b2c262db4ed414f9dff28cf934dbc88cfabc87fe3f103": "6b38e694127d072ee4ff03cdcc84fd2c7f3384c45c1700ec12d3f2a30ae82fe9"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {
+    "5aa42ceda3e3076e1a7a6acdef558d13638a8eb3ef638de6fe98ea295b259414": 124.22038888888889,
+    "91ddb1f4df944a8b3843e2355bdc6a3b4842e65c06c3ed561d4bb49a8c8fbc63": 106.40764814814814
+   },
+   "id": "4695a0a5710a367c6cdd361559a6a81066682f88a6c52c5b4b952125f42df103",
+   "incumbent": "8076e1c43f94d1e4c2a06bec8dc7e9dcae5debdb1e27d35fb26eefb4175a916e",
+   "native_comparison": false,
+   "stage": "fit",
+   "table_policy": 20,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 25600,
+    "k": 25600,
+    "m": 16,
+    "n": 5120,
+    "operation": "dense",
+    "output_stride": 5120,
+    "qtype": 12,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       4
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "393f9ac76d26ab112549945a897ef42930691618422f83907a2ab1a3e4c75a30",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        4
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "393f9ac76d26ab112549945a897ef42930691618422f83907a2ab1a3e4c75a30": "65bf298384a3a9efdaeaa4c3dc3dd6667356a0f634dfc33e0a953438f5e51b2d",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "482c5f441cd1677c0005fea50880e7465f386a1bf163135c7f56c68b2541b489",
+   "incumbent": "65bf298384a3a9efdaeaa4c3dc3dd6667356a0f634dfc33e0a953438f5e51b2d",
+   "native_comparison": false,
+   "stage": "holdout",
+   "table_policy": 21,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 7168,
+    "k": 7168,
+    "m": 192,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       2
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "1e42156294067df4a02367c8df6a22bbb58b95a66ba2837a7e4745763ac6f584",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        2
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "model-config"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "1e42156294067df4a02367c8df6a22bbb58b95a66ba2837a7e4745763ac6f584": "e60a7391857da1853a0a7599642aae125a2c7d23235f99e61ec07a0c018dfb26",
+    "b4930416f73ec846f0eaaab302a4ee21196213275627ed4ad6829ea30c9ef031": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "214037f63e145dca7ec790717b9e06ddd95a2dce40c0b990ba226da32d7b78f2",
+   "incumbent": "9ab27719dbbfa3e2e5825d0bf3ea24994d5e653d3c0f774a816dc6d30756727b",
+   "native_comparison": false,
+   "stage": "holdout",
+   "table_policy": 21,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 7168,
+    "k": 7168,
+    "m": 384,
+    "n": 3072,
+    "operation": "dense",
+    "output_stride": 3072,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf-alternate"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "c4069e4340ae97ee70bb65751fd99d101c85ad59af3ce3b38ddc88437890c6f0",
+   "incumbent": null,
+   "native_comparison": false,
+   "stage": "holdout",
+   "table_policy": 0,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 3072,
+    "k": 3072,
+    "m": 192,
+    "n": 7168,
+    "operation": "dense",
+    "output_stride": 7168,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  },
+  {
+   "candidates": [
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       16
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       128
+      ],
+      [
+       "tn",
+       256
+      ],
+      [
+       "wm",
+       64
+      ],
+      [
+       "wn",
+       32
+      ]
+     ],
+     "route": "sf"
+    },
+    {
+     "kind": "tc",
+     "parameters": [
+      [
+       "ap",
+       0
+      ],
+      [
+       "dequant_config",
+       0
+      ],
+      [
+       "dn",
+       32
+      ],
+      [
+       "grid_b",
+       0
+      ],
+      [
+       "grid_mode",
+       0
+      ],
+      [
+       "persistent",
+       -1
+      ],
+      [
+       "qtype",
+       13
+      ],
+      [
+       "split",
+       1
+      ],
+      [
+       "stages",
+       2
+      ],
+      [
+       "symbol",
+       "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+      ],
+      [
+       "tk",
+       256
+      ],
+      [
+       "tm",
+       32
+      ],
+      [
+       "tn",
+       64
+      ],
+      [
+       "wm",
+       32
+      ],
+      [
+       "wn",
+       16
+      ]
+     ],
+     "route": "sf"
+    }
+   ],
+   "capture_batch_limit": 4,
+   "cases": [
+    {
+     "arm": "full-fp16",
+     "helper_mode": "experimental",
+     "helper_options": {
+      "dequant_variant": 20,
+      "vector_io": 3
+     },
+     "id": "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2",
+     "recipe": {
+      "kind": "full",
+      "parameters": [
+       [
+        "dequant_variant",
+        20
+       ],
+       [
+        "provider",
+        "typed-fp16"
+       ],
+       [
+        "vector_io",
+        3
+       ]
+      ],
+      "route": "full"
+     },
+     "roles": [
+      "rule-top1",
+      "rule:full"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        16
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm128_tn256_tk256_wm64_wn32_s2_bc0_ap0_dn16"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        128
+       ],
+       [
+        "tn",
+        256
+       ],
+       [
+        "wm",
+        64
+       ],
+       [
+        "wn",
+        32
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf"
+     ]
+    },
+    {
+     "arm": "sf",
+     "helper_mode": "cohort-current",
+     "helper_options": {
+      "vector_io": 3
+     },
+     "id": "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b",
+     "recipe": {
+      "kind": "tc",
+      "parameters": [
+       [
+        "ap",
+        0
+       ],
+       [
+        "dequant_config",
+        0
+       ],
+       [
+        "dn",
+        32
+       ],
+       [
+        "grid_b",
+        0
+       ],
+       [
+        "grid_mode",
+        0
+       ],
+       [
+        "persistent",
+        -1
+       ],
+       [
+        "qtype",
+        13
+       ],
+       [
+        "split",
+        1
+       ],
+       [
+        "stages",
+        2
+       ],
+       [
+        "symbol",
+        "sf_q13_a0_tm32_tn64_tk256_wm32_wn16_s2_bc0_ap0_dn32"
+       ],
+       [
+        "tk",
+        256
+       ],
+       [
+        "tm",
+        32
+       ],
+       [
+        "tn",
+        64
+       ],
+       [
+        "wm",
+        32
+       ],
+       [
+        "wn",
+        16
+       ]
+      ],
+      "route": "sf"
+     },
+     "roles": [
+      "rule:sf-alternate"
+     ]
+    }
+   ],
+   "catalog_ids": {
+    "376d547b0d76a3c1fa78d3febad4fb2e61e0b1cba52a92ace6d4714dcc92063b": "7ac1e4e95f9fc030297ff20825b1a1a8caed0d47c8b0b36d8e66ec26acd5b7d5",
+    "6dfb0580da8404bdf19bdb1eb41a5d79c978700992eda2c7a41902dfaf38ce6d": "6214abb7978c5528c21a310e1a93d4bf58fe27eb0fb75b078814d9840b93c9b4",
+    "bf1aa887e677296f61b57cc95e1ca56bca7cf5a54e4fe1cdd4e91c0be26700f2": "a5b05d270d9fb818431b2b784f90d9eaf011b6f3d6c2552a11eced99fbd90be1"
+   },
+   "confirmation_captures": 2,
+   "fixed_schedules": true,
+   "historical_us": {},
+   "id": "92195e0727152701ed3f894aca4a15bd93c17d087d1e2cc0c96beed3dad67cee",
+   "incumbent": null,
+   "native_comparison": false,
+   "stage": "holdout",
+   "table_policy": 0,
+   "tensors": [],
+   "workload": {
+    "channels": 1,
+    "compute": "f16",
+    "experts": 1,
+    "fusion": "none",
+    "input_stride": 3072,
+    "k": 3072,
+    "m": 384,
+    "n": 7168,
+    "operation": "dense",
+    "output_stride": 7168,
+    "qtype": 13,
+    "router": "",
+    "storage": "f32",
+    "topk": 1
+   }
+  }
+ ],
+ "production_changed": false,
+ "schema": "flashgguf.dense-mnk13.v1",
+ "sha256": "4b894ca79b084bc3f254555908c0fc1cd2f6c45630efcaaf771e8b231597a14e"
+}
