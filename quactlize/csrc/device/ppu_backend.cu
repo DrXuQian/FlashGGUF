@@ -15,12 +15,12 @@
 #include <cstring>
 #include <limits>
 
-#include "gguf_bc_vecdot.hpp"
+#include "../../simt_gemv/raw/gguf_bc_vecdot.hpp"
 #include "gguf_scale_prepass.hpp"
 #include "gguf_unit_pack.hpp"
-#include "gguf_vecdot.hpp"
-#include "gemv_lowbit/gemv_launcher.hpp"
-#include "gemv_lowbit/gemv_rt.hpp"
+#include "../../simt_gemv/raw/gguf_vecdot.hpp"
+#include "../../simt_gemv/lowbit/gemv_launcher.hpp"
+#include "../../simt_gemv/lowbit/gemv_rt.hpp"
 #include "ppu_dense_configs.inc"
 #include "ppu_format_config.hpp"
 #include "ppu_grouped_configs.inc"

@@ -1,7 +1,7 @@
 // Host-only forward producer for the packed metadata channel.  Kept separate from ppu_dense_layout.cu so callers
 // which need only units do not inherit xplane templates, and so this ABI can be tested with an ordinary host build.
 #include "gguf_unit_pack.hpp"
-#include "gguf_vecdot.hpp"
+#include "../../simt_gemv/raw/gguf_vecdot.hpp"
 #include "ppu_format_config.hpp"
 #include "ppu_placed_arrangement.hpp"
 #include "quactlize_ppu_packed.h"

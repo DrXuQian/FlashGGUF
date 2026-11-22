@@ -104,7 +104,7 @@ def test_prefill_sync_only_updates_documented_public_includes(tmp_path):
     sync(tmp_path)
     for src,dst in FILES.items():
         text=(ROOT/src).read_text()
-        if src in ('quactlize/execution/q4_decode.h','quactlize/execution/simt.h'):
+        if src in ('quactlize/simt_gemv/q4_decode.h','quactlize/simt_gemv/simt.h'):
             text=text.replace('"api.h"','"kpack_execution.h"')
         for before,after in INCLUDES.items():text=text.replace('"'+before+'"','"'+after+'"')
         assert (target/dst).read_text()==text

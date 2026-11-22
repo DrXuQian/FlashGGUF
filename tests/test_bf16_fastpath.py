@@ -11,7 +11,7 @@ def test_actual_packed_writer_and_typed_s1_query(tmp_path):
     result=subprocess.run(['g++','-O2','-std=c++17',f'-I{ROOT}',
         f'-I{ROOT}/quactlize/include',f'-I{ROOT}/third_party/actlize/include',
         f'-I{sdk}/include',f'-I{sdk}/targets/x86_64-linux/include',
-        str(ROOT/'tests/bf16_fastpath_host.cpp'),str(ROOT/'quactlize/execution/q4_decode.cpp'),
+        str(ROOT/'tests/bf16_fastpath_host.cpp'),str(ROOT/'quactlize/simt_gemv/q4_decode.cpp'),
         '-o',str(executable)],capture_output=True,text=True)
     assert result.returncode==0,result.stdout+result.stderr
     result=subprocess.run([str(executable)],capture_output=True,text=True)

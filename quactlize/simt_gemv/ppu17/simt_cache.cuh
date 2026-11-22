@@ -1,6 +1,6 @@
 #pragma once
-#include "io.cuh"
-#include "launch.cuh"
+#include "../../backends/ppu17/io.cuh"
+#include "../../backends/ppu17/launch.cuh"
 
 namespace quactlize::ppu17 {
 

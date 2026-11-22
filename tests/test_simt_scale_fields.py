@@ -42,9 +42,9 @@ class SimtScaleFields(unittest.TestCase):
     def test_actual_reader_all_fields_formats_and_recipe_modes(self):
         # Pure integer/affine code only. This is not a CUDA/CuTe host stub and
         # makes no claim about device lowering; the PPU field A/B covers that.
-        helper = function(ROOT/'quactlize/execution/q4_s1_helpers.cuh',
+        helper = function(ROOT/'quactlize/simt_gemv/q4_s1_helpers.cuh',
                           '__device__ __forceinline__ float2 q4_affine_header32(')
-        selected = function(ROOT/'quactlize/execution/simt_kernel.cuh',
+        selected = function(ROOT/'quactlize/simt_gemv/simt_kernel.cuh',
                             'template<int Q,int Changes>\n__device__ __forceinline__ float2 affine_selected(')
         source = r'''
 #include <cstdint>

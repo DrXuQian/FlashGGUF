@@ -1,8 +1,7 @@
 #include <hggc_runtime.h>
-#include "store.cuh"
-#include "paired16.cuh"
-#include "selection.hpp"
-#include "../execution/q4_s1_validation.hpp"
+#include "fused_finish.cuh"
+#include "../fusion/selection.hpp"
+#include "q4_s1_validation.hpp"
 
 namespace quactlize::execution::q4_s1 {
 CUTLASS_DEVICE Row locate(quactlize::fusion::DeviceCall const& c, int row) {
@@ -11,7 +10,7 @@ CUTLASS_DEVICE Row locate(quactlize::fusion::DeviceCall const& c, int row) {
     return locate(static_cast<qkg_call_v1 const&>(c), source);
 }
 }
-#include "../execution/simt_q8_vector.cuh"
+#include "simt_q8_vector.cuh"
 
 namespace quactlize::fusion {
 // Same dynamic-dimension, constant-S1 tile16 body as the confirmed paired
@@ -96,7 +95,7 @@ extern "C" int QGU_CAT(qgu_recipe_,QGU_QTYPE)(quactlize::fusion::DeviceCall cons
 #define QGU_RECIPE(Name,Id,B,S,TM,W,R,V,C,P,Changes,Hoist,N,K) \
     case Id: if constexpr(B==0 && R!=GenericReader) \
         return special_launch<QGU_QTYPE,R,W,P,Changes,N,K>(*c); else return QKG_SHAPE;
-#include "recipes.inc"
+#include "../fusion/recipes.inc"
 #undef QGU_RECIPE
     default:return QKG_INVALID;
     }

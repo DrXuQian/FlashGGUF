@@ -34,7 +34,7 @@ def rows(*, include_dense=True, include_tokens=True):
         if len({tuple(r['key']) for r in result}) != len(result):
             raise ValueError('duplicate exact Q8 body binding')
         if include_tokens:
-            from quactlize.execution.token_cta_policy import load
+            from quactlize.simt_gemv.token_cta_policy import load
             latest = load()['rows']
             covered = {tuple(r['key']) for r in latest}
             result = [r for r in result if tuple(r['key']) not in covered]
@@ -66,12 +66,12 @@ def apply(baseline):
 
 
 def capability():
-    from quactlize.execution.token_cta_policy import EVIDENCE as token_evidence
+    from quactlize.simt_gemv.token_cta_policy import EVIDENCE as token_evidence
     return dict(evidence_sha256=EVIDENCE,
                 token_cta_evidence_sha256=token_evidence,
                 dense_m_evidence_sha256=json.loads((ROOT/'policies/kpack_dense_decode_v1.json').read_bytes())['evidence_sha256'],
-                catalog_sha256=sha(ROOT/'quactlize/execution/q8_refresh.inc'),
-                body_sha256=sha(ROOT/'quactlize/execution/simt_q8_refresh.cuh'),
+                catalog_sha256=sha(ROOT/'quactlize/simt_gemv/q8_refresh.inc'),
+                body_sha256=sha(ROOT/'quactlize/simt_gemv/simt_q8_refresh.cuh'),
                 keys=[dict(key=r['key'], body=r['implementation']['body'],
                            config={f: r['config'][f] for f in FIELDS}) for r in rows()])
 

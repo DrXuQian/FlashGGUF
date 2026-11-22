@@ -6,7 +6,8 @@ import pytest
 from quactlize.dispatch import catalog_confirmation as confirmation
 from quactlize.dispatch.dense_prefill import EVIDENCE as PREFILL, validate as validate_prefill
 from quactlize.dispatch.planning import plan_smallm
-from quactlize.execution import moe_decode_policy, token_cta_policy
+from quactlize.execution import moe_decode_policy
+from quactlize.simt_gemv import token_cta_policy
 from quactlize.runtime.tuning import digest
 from tools import generate_decode_selection as generate
 

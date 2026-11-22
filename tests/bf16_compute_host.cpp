@@ -1,7 +1,7 @@
 #include <hggc_runtime.h>
 #include "actlize_extensions/cutlass/gemm/collective/detail/ppu_mixed_metadata_policy.hpp"
 #include "cute/atom/mma_traits_ppu0010.hpp"
-#include "quactlize/execution/simt_validation.hpp"
+#include "quactlize/simt_gemv/simt_validation.hpp"
 #include <cassert>
 #include <cmath>
 #include <cstdio>

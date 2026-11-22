@@ -21,7 +21,7 @@ COMPONENTS = ROOT/'policies/kpack_component_decode_v1.json'
 OUTPUT = ROOT/'policies/kpack_smallm_effective_v1.hpp'
 
 
-IMPLEMENTATIONS = ROOT/'quactlize/execution/measured_decode.inc'
+IMPLEMENTATIONS = ROOT/'quactlize/simt_gemv/measured_decode.inc'
 
 
 ARCHIVES = {
@@ -89,13 +89,13 @@ def effective(evidence, *, include_components=True, include_refresh=True, includ
         from quactlize.dispatch.catalog_components import apply
         result = apply(json.loads(COMPONENTS.read_text()), result)
         if include_refresh:
-            from quactlize.execution.q8_refresh import apply as bind_q8
+            from quactlize.simt_gemv.q8_refresh import apply as bind_q8
             result = bind_q8(result)
             if include_dense:
                 from quactlize.dispatch.catalog_dense import apply as bind_dense
                 result = bind_dense(result)
                 if include_token_cta:
-                    from quactlize.execution.token_cta_policy import apply as bind_tokens
+                    from quactlize.simt_gemv.token_cta_policy import apply as bind_tokens
                     result = bind_tokens(result)
                     if include_moe:
                         from quactlize.execution.moe_decode_policy import apply as bind_moe

@@ -23,10 +23,10 @@ from quactlize.dispatch.catalog_components import key, require
 from quactlize.dispatch.catalog_refresh import allowed, identity
 
 
-from quactlize.execution.simt_codegen import Config, runtime_inventory
+from quactlize.simt_gemv.simt_codegen import Config, runtime_inventory
 
 
-from quactlize.execution.q8_refresh import DENSE_EVIDENCE
+from quactlize.simt_gemv.q8_refresh import DENSE_EVIDENCE
 
 
 from quactlize.runtime.tuning import digest

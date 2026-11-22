@@ -1,7 +1,8 @@
 #include <cuda_runtime.h>
 #include "target.cuh"
 #include "kernels.cuh"
-#include "simt_cache.cuh"
+#include "../../simt_gemv/ppu17/gemv.cuh"
+#include "../../simt_gemv/ppu17/simt_cache.cuh"
 #include "tma.cuh"
 #include <stdexcept>
 

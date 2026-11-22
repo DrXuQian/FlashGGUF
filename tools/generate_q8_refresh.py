@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from quactlize.dispatch.catalog_refresh import verify
-from quactlize.execution.q8_refresh import EVIDENCE, TABLE, rows
+from quactlize.simt_gemv.q8_refresh import EVIDENCE, TABLE, rows
 
 # The experiment generators and Q8 kernel/activation headers were checked
 # against the uploaded module receipts. Regeneration is not permission to
@@ -21,7 +21,7 @@ MEASURED_BODIES_SHA256 = '00d1eba87baa5e086dcc0a217583f3246ba73611a4c76048a74e4e
 def body(index):
     # The admitted native bodies are canonical. Experiment transformations
     # live on experiments/ppu-tuning; regeneration must not rerun them here.
-    text = (ROOT/'quactlize/execution/simt_q8_refresh.cuh').read_text()
+    text = (ROOT/'quactlize/simt_gemv/simt_q8_refresh.cuh').read_text()
     bodies = re.findall(r'(template<int Input,int Compute,.*?^})', text, re.M | re.S)
     matches = [b for b in bodies if f'void address_body_{index}(' in b]
     if len(matches) != 1:
@@ -93,7 +93,7 @@ def main():
     p.add_argument('--check', action='store_true')
     a = p.parse_args()
     for name, text in [('q8_refresh.inc', catalog()), ('simt_q8_refresh.cuh', header())]:
-        path = ROOT/'quactlize/execution'/name
+        path = ROOT/'quactlize/simt_gemv'/name
         if a.check:
             if path.read_text() != text:
                 raise ValueError('stale Q8 binding: '+str(path))

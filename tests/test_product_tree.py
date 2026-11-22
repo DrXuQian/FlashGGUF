@@ -25,8 +25,8 @@ def test_no_experiment_payloads_in_product_tree():
 
 def test_admitted_q8_body_and_generated_catalog_are_current():
     from tools import generate_q8_refresh as gen
-    assert gen.header() == (ROOT / 'quactlize/execution/simt_q8_refresh.cuh').read_text()
-    assert gen.catalog() == (ROOT / 'quactlize/execution/q8_refresh.inc').read_text()
+    assert gen.header() == (ROOT / 'quactlize/simt_gemv/simt_q8_refresh.cuh').read_text()
+    assert gen.catalog() == (ROOT / 'quactlize/simt_gemv/q8_refresh.inc').read_text()
 
 
 def test_q8_source_change_is_not_silently_re_admitted(monkeypatch):
@@ -38,7 +38,7 @@ def test_q8_source_change_is_not_silently_re_admitted(monkeypatch):
 
 
 def test_typed_q4_codegen_retains_every_selected_reader():
-    from quactlize.execution import q4_decode_codegen as gen
+    from quactlize.simt_gemv import q4_decode_codegen as gen
     sources = gen.sources()
     for (n, k), recipes in gen.recipes().items():
         text = sources[f'q4decode_{n}_{k}.cu']

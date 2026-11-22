@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "gguf_scale_prepass.hpp"
-#include "gguf_vecdot.hpp"
+#include "../../../simt_gemv/raw/gguf_vecdot.hpp"
 #include "gguf_packed_unit.hpp"
 #include "gguf_unit_pack.hpp"
 #include "ppu_format_config.hpp"

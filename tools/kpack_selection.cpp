@@ -1,6 +1,6 @@
 // Host-only final selection used by package planning and offline explain.
 #include "quactlize/dispatch/selection.hpp"
-#include "quactlize/execution/simt_strategy.hpp"
+#include "quactlize/simt_gemv/simt_strategy.hpp"
 #include "policies/kpack_prefill_confirmation_v1.hpp"
 #include <iomanip>
 #include <iostream>

@@ -12,7 +12,7 @@ from ci.support.graph import Replay
 from .support import (Arena, Candidate, DENSE_M, Info, Options, Params, Public,
                       QTYPES, check_output, packed)
 from quactlize.dispatch.dense_prefill import EVIDENCE
-from quactlize.execution.token_cta_policy import load as token_choices
+from quactlize.simt_gemv.token_cta_policy import load as token_choices
 
 
 def helper_followup_points():

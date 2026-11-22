@@ -199,7 +199,7 @@ def test_actual_public_v3_and_q4_selectors_use_the_same_catalog(tmp_path, table)
 
 
 def test_q4_production_module_closure_retains_original_and_new_configs(table):
-    from quactlize.execution.q4_decode_codegen import recipes, sources
+    from quactlize.simt_gemv.q4_decode_codegen import recipes, sources
     available = recipes()
     generated = sources()
     for row in table['rows']:
@@ -213,8 +213,8 @@ def test_q4_production_module_closure_retains_original_and_new_configs(table):
 
 def test_stale_execution_manifest_cannot_hide_a_new_q4_specialization(tmp_path, table):
     from quactlize.dispatch.planning import plan_smallm, validate_inventory
-    from quactlize.execution.q4_decode_codegen import recipes
-    from quactlize.execution.simt_codegen import Config
+    from quactlize.simt_gemv.q4_decode_codegen import recipes
+    from quactlize.simt_gemv.simt_codegen import Config
     plan = plan_smallm(tmp_path, [r['key'] for r in table['rows']])
     simt = {tuple(r['config'][f] for f in gen.FIELDS) for r in table['rows'] if r['config']['kind'] == 'simt'}
     execution = dict(simt_configs={'13':[vars(Config(*c)) for c in sorted(simt)]},

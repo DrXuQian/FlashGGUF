@@ -22,7 +22,7 @@
 #endif
 #include "gguf_vecdot.hpp"
 #include "gguf_packed_unit.hpp"
-#include "gemv_lowbit/gemv_common.hpp"
+#include "../lowbit/gemv_common.hpp"
 #include "quactlize_ppu_config.h"
 
 namespace gguf_scale {

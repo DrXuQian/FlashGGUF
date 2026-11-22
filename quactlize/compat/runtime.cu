@@ -2,6 +2,7 @@
 #include "reader.cuh"
 #include "grouped.cuh"
 #include "../execution/native16.cuh"
+#include "../simt_gemv/native16.cuh"
 #include <memory>
 #include <string>
 
@@ -123,29 +124,6 @@ __global__ void expand(Weight w, T *out, int first_expert, int groups, int first
         out[i] = n < w.n ? T(value<Q, Packed>(w, e, n, k)) : T(0.f);
     }
 }
-template <int Q, class T, bool Packed>
-__global__ void indexed_simt(qpm_problem_v1 p, qpm_buffers_v1 b, Weight w, int rows) {
-    int lane = threadIdx.x % 32;
-    for (int64_t cell = int64_t(blockIdx.x) * 4 + threadIdx.x / 32; cell < int64_t(rows) * p.n;
-         cell += int64_t(gridDim.x) * 4) {
-        int row = int(cell / p.n), n = int(cell % p.n), e = expert(p, b, row);
-        float sum = 0.f;
-        if (e >= 0 && e < p.experts) {
-            auto a = static_cast<T const *>(b.input) + int64_t(row / p.topk) * p.input_token_stride +
-                     (p.channels == 1 ? 0 : int64_t(row % p.topk) * p.input_row_stride);
-            for (int k = lane; k < p.k; k += 32) {
-                T w16(value<Q, Packed>(w, e, n, k));
-                sum = fmaf(float(a[k]), float(w16), sum);
-            }
-        } else if (e != -1 && lane == 0)
-            atomicOr(b.device_error, QPM_BAD_ID);
-        for (int delta = 16; delta; delta /= 2)
-            sum += __shfl_down_sync(0xffffffff, sum, delta);
-        if (lane == 0)
-            static_cast<T *>(b.output)[int64_t(row) * p.output_stride + n] = T(sum);
-    }
-}
-
 template <int Q, class T, bool Packed> void run(Prepared const &h, qpm_buffers_v1 const &b) {
     auto const &p = h.p;
     auto const &l = h.l;

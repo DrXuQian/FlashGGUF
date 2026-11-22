@@ -7,7 +7,7 @@
 #include "tc_target.hpp"
 #include "moe.hpp"
 #include "../execution/moe.h"
-#include "../execution/simt_validation.hpp"
+#include "../simt_gemv/simt_validation.hpp"
 #include "../fusion/validation.hpp"
 #include "../include/ppu_device.hpp"
 #include <dlfcn.h>

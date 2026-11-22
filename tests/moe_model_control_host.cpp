@@ -1,7 +1,7 @@
 // The real public v3 -> v2 -> Q4 selector chain, with resource-only device
 // doubles. No GPU math, loading, JIT or performance is simulated here.
 #include "quactlize/dispatch/binding.cpp"
-#include "quactlize/execution/q4_decode.cpp"
+#include "quactlize/simt_gemv/q4_decode.cpp"
 #include <cassert>
 #include <iomanip>
 #include <iostream>

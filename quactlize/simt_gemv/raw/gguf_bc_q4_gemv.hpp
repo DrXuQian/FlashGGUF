@@ -17,7 +17,7 @@
 
 #include "gguf_bc_q4_reader.hpp"
 #include "gguf_packed_unit.hpp"
-#include "gemv_lowbit/gemv_common.hpp"
+#include "../lowbit/gemv_common.hpp"
 
 namespace gguf_scale::bc_q4_gemv {
 

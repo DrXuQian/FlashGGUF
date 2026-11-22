@@ -124,7 +124,7 @@ TWO_PLANE = frozenset({QuantType.Q3_K, QuantType.Q5_K, QuantType.Q6_K})
 
 _GROUPED = "quactlize/include/moe_grouped_ppu.cuh"
 _DENSE = "quactlize/include/fpA_intB_ppu.cuh"
-_GEMV = "quactlize/include/gemv_lowbit/"
+_GEMV = "quactlize/simt_gemv/lowbit/"
 _DEQ = "quactlize/include/unfused_weight_dequantize.hpp"
 
 _ROUTES = "quactlize/routes.py"
@@ -312,7 +312,7 @@ _add(Scheme.SCALE_FIRST, Shape.GEMV_MOE, _KQUANTS, Impl(
 # the expert, grid.y owns a routed row within that expert, row_offsets gathers activation/output rows, and the raw
 # block base advances by the expert stride. The block decoder and CUDA-core dot loop remain shared with dense GEMV.
 _add(Scheme.FULLY_QUANTIZED, Shape.GEMV_MOE, _KQUANTS, Impl(
-    Status.VALIDATED, "quactlize/include/gguf_vecdot.hpp", note=(
+    Status.VALIDATED, "quactlize/simt_gemv/raw/gguf_vecdot.hpp", note=(
         "the production device library launches vecdot_rows_kernel<Grouped=true> over grid.z experts, gathers "
         "ragged rows through row_offsets, and advances the native GGUF weight base per expert. test_gguf_routes "
         "covers all five formats against official gguf with asymmetric n/k and different bytes per expert, after "
@@ -389,7 +389,7 @@ _add(Scheme.FULLY_QUANTIZED, Shape.GROUPED, (QuantType.Q6_K,), Impl(
         "experts-read-expert-0 fault. It is NOT IN THE DEFAULT BUILD and requires PPU_PACKED_SCALE=1 plus "
         "PPU_PACKED_FORMAT=4 in the Q6-specific one of five builds")))
 _add(Scheme.FULLY_QUANTIZED, Shape.GEMV, _KQUANTS, Impl(
-    Status.VALIDATED, "quactlize/include/gguf_vecdot.hpp", note=(
+    Status.VALIDATED, "quactlize/simt_gemv/raw/gguf_vecdot.hpp", note=(
         "libquactlize_ppu.so now exports the subgroup-cooperative native GGUF launcher, so the Python route is one "
         "device GEMV rather than the old host k/256 assembly. test_gguf_routes runs that production ABI for all "
         "five formats against official gguf at n=24/k=2048 and proves a copied first-to-last weight row is rejected "

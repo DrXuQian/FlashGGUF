@@ -201,10 +201,10 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
     runtime = output / 'quactlize-runtime'
     runtime.mkdir()
     start = time.monotonic()
-    public_sources = {p: sha(p) for directory in ('quactlize/dense', 'quactlize/dispatch', 'quactlize/moe', 'quactlize/routing', 'quactlize/ffn', 'quactlize/fusion', 'quactlize/compat')
+    public_sources = {p: sha(p) for directory in ('quactlize/dense', 'quactlize/dispatch', 'quactlize/moe', 'quactlize/routing', 'quactlize/ffn', 'quactlize/fusion', 'quactlize/simt_gemv', 'quactlize/compat')
                       for p in (ROOT / directory).iterdir() if p.is_file()}
     public_sources.update({p: sha(p) for p in (ROOT/'policies').iterdir() if p.suffix in ('.hpp', '.json')})
-    for name in ('native16.cuh','native16_geometry.hpp'):
+    for name in ('native16.cuh','native16_geometry.hpp','native16_rows.cuh'):
         p=ROOT/'quactlize/execution'/name
         public_sources[p]=sha(p)
     device_policy=ROOT/'quactlize/include/ppu_device.hpp'

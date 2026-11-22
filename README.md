@@ -7,6 +7,9 @@ Humming, is now maintained in [FlashQuant](https://github.com/DrXuQian/FlashQuan
 For that API use `flashquant.affine` and link `libflashquant.so`; the C symbol
 names remain unchanged. GGUF users still use `quactlize` and `libncp_quactlize.so`.
 
+[SIMT GEMV](quactlize/simt_gemv/) owns the CUDA-core weight readers and
+kernels; Tensor Core decode remains in `quactlize/decode/`.
+
 PPU1.0 ZW610 and ZW810E reuse ZW810's exact selection tables and buckets.
 Recorded latencies remain ZW810 measurements, used as selection estimates on
 these devices. Launch grids, occupancy and resource checks use the actual

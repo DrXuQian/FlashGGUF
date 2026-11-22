@@ -6,10 +6,11 @@ from pathlib import Path
 
 from quactlize.runtime.compiler import sha
 from quactlize.runtime.tuning import digest
+from quactlize.simt_gemv import measured_source
 
 ROOT = Path(__file__).resolve().parents[2]
 TABLE = ROOT/'policies/kpack_token_cta_v1.json'
-CATALOG = ROOT/'quactlize/execution/token_cta.inc'
+CATALOG = Path(__file__).with_name("token_cta.inc")
 ARCHIVE = '28a8d7dbaea294311ac1d2b61c329b39068c246f8bf3a585e0a146069a3c1631'
 EVIDENCE = '767c544b34eba865df83a605331aa45a2b1bc66561d48465060debec6bc703a8'
 FIELDS = ('variant', 'columns', 'warps', 'values', 'split')
@@ -131,7 +132,7 @@ def capability():
     if CATALOG.read_text() != catalog():
         raise ValueError('stale token CTA catalog; regenerate before building')
     for path, expected in data['body_hashes'].items():
-        if sha(ROOT/path) != expected:
+        if sha(measured_source(ROOT, path)) != expected:
             raise ValueError('token CTA measured body changed; new device evidence required')
     return dict(evidence_sha256=EVIDENCE, catalog_sha256=sha(CATALOG),
         body_hashes=data['body_hashes'], keys=[dict(key=r['key'],

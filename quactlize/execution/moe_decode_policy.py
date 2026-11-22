@@ -11,6 +11,7 @@ import statistics
 
 from quactlize.runtime.compiler import sha
 from quactlize.runtime.tuning import digest
+from quactlize.simt_gemv import measured_source
 
 ROOT = Path(__file__).resolve().parents[2]
 TABLE = ROOT/'policies/kpack_moe_decode_exact_v1.json'
@@ -82,14 +83,14 @@ def validate(data):
     # These two tables are consulted only after a QKG_DENSE guard in the
     # hash-pinned scope headers. Dense exact admissions must not relabel MoE
     # timing or require remeasuring unchanged indexed device bodies.
-    from quactlize.execution.token_cta_policy import catalog as token_catalog
+    from quactlize.simt_gemv.token_cta_policy import catalog as token_catalog
     from tools.generate_q8_refresh import catalog as q8_catalog
     dense_catalogs = {'quactlize/execution/token_cta.inc': token_catalog,
                       'quactlize/execution/q8_refresh.inc': q8_catalog}
-    if len(data['body_hashes']) < 5 or any(sha(ROOT/p) != h for p,h in data['body_hashes'].items()
+    if len(data['body_hashes']) < 5 or any(sha(measured_source(ROOT, p)) != h for p,h in data['body_hashes'].items()
                                           if p not in dense_catalogs):
         raise ValueError('MoE measured kernel body changed; renew device evidence')
-    if any((ROOT/p).read_text() != generate() for p,generate in dense_catalogs.items()):
+    if any(measured_source(ROOT, p).read_text() != generate() for p,generate in dense_catalogs.items()):
         raise ValueError('unverified dense-only implementation catalog')
     points = set()
     for row in data['rows']:

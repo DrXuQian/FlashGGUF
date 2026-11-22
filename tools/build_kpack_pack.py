@@ -32,6 +32,9 @@ def build(sdk, output, *, arch='ppu_10'):
     inputs = sorted({p for d in includes for p in d.rglob("*")
                      if p.is_file() and p.suffix in (".cpp", ".cu", ".h", ".hpp", ".cuh", ".inc")})
     hashes = {str(p.relative_to(ROOT)): sha(p) for p in inputs}
+    # fusion/gate_up.h also includes the public SIMT descriptor.
+    simt_api = ROOT / "quactlize/simt_gemv/simt.h"
+    hashes[str(simt_api.relative_to(ROOT))] = sha(simt_api)
     commands = []
     for name in ("sizes.cpp", "ppu_pack.cu"):
         commands.append([str(sdk / "bin/hgcc"), *flags,

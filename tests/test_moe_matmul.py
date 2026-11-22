@@ -16,8 +16,8 @@ def test_host_contract(tmp_path,source):
     if source=='moe_scaffold_host':extra=[str(ROOT/'quactlize/moe/selection.cpp')]
     if source in ('moe_matmul_host','ffn_host'):
         (tmp_path/'catalog.inc').write_text('static std::vector<Image> kImages{};\nstatic char const kJitSource[]="";\n')
-        extra=[str(ROOT/p) for p in ('quactlize/packing/sizes.cpp','quactlize/execution/simt.cpp',
-               'quactlize/execution/q4_decode.cpp','quactlize/moe/selection.cpp')]
+        extra=[str(ROOT/p) for p in ('quactlize/packing/sizes.cpp','quactlize/simt_gemv/simt.cpp',
+               'quactlize/simt_gemv/q4_decode.cpp','quactlize/moe/selection.cpp')]
     sdk=Path(os.environ.get('PPU_SDK','/usr/local/PPU_SDK'))
     exe=tmp_path/source
     subprocess.run(['g++','-std=c++17','-O1','-pthread','-rdynamic','-I'+str(ROOT),'-I'+str(tmp_path),

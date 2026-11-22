@@ -14,8 +14,8 @@ FILES={
     'quactlize/decode/api.h':'kpack_decode_io.h',
     'quactlize/dequant/api.h':'kpack_dequant.h',
     'quactlize/prefill/api.h':'kpack_prefill.h',
-    'quactlize/execution/q4_decode.h':'kpack_q4_decode.h',
-    'quactlize/execution/simt.h':'kpack_simt.h',
+    'quactlize/simt_gemv/q4_decode.h':'kpack_q4_decode.h',
+    'quactlize/simt_gemv/simt.h':'kpack_simt.h',
     'quactlize/fusion/gate_up.h':'kpack_gate_up.h',
     'quactlize/fusion/llama_graph.hpp':'gate_up_graph.hpp',
 }
@@ -38,7 +38,7 @@ def sync(llama):
     if not folder.is_dir():raise ValueError('missing private integration headers')
     for source,target in FILES.items():
         text=(ROOT/source).read_text()
-        if source in ('quactlize/execution/q4_decode.h','quactlize/execution/simt.h'):
+        if source in ('quactlize/simt_gemv/q4_decode.h','quactlize/simt_gemv/simt.h'):
             text=text.replace('"api.h"','"kpack_execution.h"')
         for before,after in INCLUDES.items():text=text.replace('"'+before+'"','"'+after+'"')
         (folder/target).write_text(text)

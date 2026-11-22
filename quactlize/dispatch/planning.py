@@ -123,7 +123,7 @@ def validate_inventory(plan, execution, modules=(), *, jit=False):
     q8 = [r for r in plan['requests'] if r['status'] == 0 and
           r.get('implementation', {}).get('q8_body')]
     if q8:
-        from quactlize.execution.q8_refresh import capability
+        from quactlize.simt_gemv.q8_refresh import capability
         expected = capability()
         if execution.get('q8_refresh') != expected:
             raise ValueError('final selector Q8 body capability differs; rebuild execution')
@@ -136,7 +136,7 @@ def validate_inventory(plan, execution, modules=(), *, jit=False):
     tokens = [r for r in plan['requests'] if r['status'] == 0 and
               r.get('implementation', {}).get('cta_tokens')]
     if tokens:
-        from quactlize.execution.token_cta_policy import capability as token_capability
+        from quactlize.simt_gemv.token_cta_policy import capability as token_capability
         token_expected = token_capability()
         if execution.get('token_cta') != token_expected:
             raise ValueError('final selector token CTA capability differs; rebuild execution')

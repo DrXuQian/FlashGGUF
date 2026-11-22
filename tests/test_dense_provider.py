@@ -53,7 +53,7 @@ def test_public_provider_orchestration_and_poc_selection(tmp_path):
     subprocess.run(['g++', '-std=c++17', '-O1', '-pthread', '-rdynamic', f'-I{ROOT}', f'-I{tmp_path}',
         f'-I{ROOT / "quactlize/include"}', f'-I{ROOT / "third_party/actlize/include"}', f'-I{sdk / "include"}',
         str(ROOT / 'tests/dense_provider_host.cpp'), str(ROOT / 'quactlize/packing/sizes.cpp'),
-        str(ROOT / 'quactlize/execution/simt.cpp'), str(ROOT / 'quactlize/execution/q4_decode.cpp'),
+        str(ROOT / 'quactlize/simt_gemv/simt.cpp'), str(ROOT / 'quactlize/simt_gemv/q4_decode.cpp'),
         '-ldl', '-o', str(exe)], check=True)
     result=subprocess.run([str(exe)], check=True, text=True, stdout=subprocess.PIPE)
     from tests.test_prefill_refresh_policy import check_materialized

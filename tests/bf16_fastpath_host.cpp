@@ -4,8 +4,8 @@ dim3 threadIdx{0,0,0};
 #include "cute/atom/mma_traits_ppu0010.hpp"
 #include "cute/arch/copy_ppu0010_aiu.hpp"
 #include "actlize_extensions/cutlass/gemm/collective/detail/ppu_decode_input.hpp"
-#include "quactlize/execution/q4_s1_validation.hpp"
-#include "quactlize/execution/q4_decode.h"
+#include "quactlize/simt_gemv/q4_s1_validation.hpp"
+#include "quactlize/simt_gemv/q4_decode.h"
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -24,7 +24,7 @@ template<class T> T __shfl_xor_sync(unsigned,T,int) {assert(false);return T{};}
 inline uint32_t __byte_perm(uint32_t,uint32_t,int) {assert(false);return 0;}
 // Dequant arithmetic is not executed by this host-only transport test.
 __half2 __hfma2(__half2,__half2,__half2);
-#include "quactlize/execution/q4_s1_helpers.cuh"
+#include "quactlize/simt_gemv/q4_s1_helpers.cuh"
 
 using Bf16=cutlass::bfloat16_t;
 using Half=cutlass::half_t;

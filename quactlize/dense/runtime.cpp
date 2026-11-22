@@ -5,8 +5,8 @@
 #include "../dispatch/smallm.hpp"
 #include "../prefill/api.h"
 #include "../prefill/dense_internal.hpp"
-#include "../execution/simt_validation.hpp"
-#include "../execution/simt_token_cta_scope.hpp"
+#include "../simt_gemv/simt_validation.hpp"
+#include "../simt_gemv/simt_token_cta_scope.hpp"
 #include "../include/ppu_device.hpp"
 #include "../runtime/library.hpp"
 #include <hggc_runtime_api.h>

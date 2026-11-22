@@ -109,7 +109,7 @@ def test_actual_c_abi_matches_the_selected_simt_winners(tmp_path,selected):
 
 def test_measured_implementation_does_not_leak_to_another_semantic_key(tmp_path,evidence):
     source=tmp_path/'scope.cpp';binary=tmp_path/'scope'
-    source.write_text('''#include "quactlize/execution/measured_decode.hpp"
+    source.write_text('''#include "quactlize/simt_gemv/measured_decode.hpp"
 #include <cassert>
 using namespace quactlize::execution::simt;
 int main(){
@@ -123,7 +123,7 @@ d.compute_type^=1;assert(measured_decode(d,f)==MeasuredDecode::None);d.compute_t
 c.input_type=QKG_F16;assert(measured_decode(d,f)==MeasuredDecode::None);c.input_type=QKG_F32; \
 c.channels+=1;assert(measured_decode(d,f)==MeasuredDecode::None);c.channels=Ch; \
 c.n+=256;assert(measured_decode(d,f)!=MeasuredDecode::Id);}
-#include "quactlize/execution/measured_decode.inc"
+#include "quactlize/simt_gemv/measured_decode.inc"
 #undef QDM
 }
 ''')
@@ -145,15 +145,15 @@ def test_tc_source_does_not_depend_on_simt_row_reducer():
     old=subprocess.check_output(['git','show',
         'b04cb96347beccb682dd298486394ea4e99cd7a1:quactlize/decode/reducer.cuh'],cwd=ROOT)
     assert (ROOT/'quactlize/decode/reducer.cuh').read_bytes()==old
-    body=(ROOT/'quactlize/execution/simt_kernel.cuh').read_text()
+    body=(ROOT/'quactlize/simt_gemv/simt_kernel.cuh').read_text()
     assert '#include "simt_reducer.cuh"' in body
 
 
 def test_actual_generated_v1_and_v2_dispatch_share_implementation(tmp_path):
-    from quactlize.execution import simt_codegen
+    from quactlize.simt_gemv import simt_codegen
     stub = tmp_path/'measured_decode.cuh'
     stub.write_text(r'''#pragma once
-#include "quactlize/execution/measured_decode.hpp"
+#include "quactlize/simt_gemv/measured_decode.hpp"
 #include <cstring>
 inline qkg_simt_call_v2 observed{};
 inline int implementation=-1, launches=0;
@@ -172,7 +172,7 @@ namespace q8_vector { using simt::launch;using simt::launch_v2; }
 ''')
     (tmp_path/'simt_common.cuh').write_text(r'''#pragma once
 #include "measured_decode.cuh"
-#include "quactlize/execution/simt_common_scope.hpp"
+#include "quactlize/simt_gemv/simt_common_scope.hpp"
 namespace quactlize::execution::simt {
 template<int Q,int C,int W,int P> int common_reader_launch(qkg_simt_call_v2 const& d,int) {
     observed=d;implementation=-2;++launches;return QKG_OK;
@@ -181,7 +181,7 @@ template<int Q,int C,int W,int P> int common_reader_launch(qkg_simt_call_v2 cons
 ''')
     (tmp_path/'simt_q8_refresh.cuh').write_text(r'''#pragma once
 #include "measured_decode.cuh"
-#include "quactlize/execution/simt_q8_refresh.hpp"
+#include "quactlize/simt_gemv/simt_q8_refresh.hpp"
 namespace quactlize::execution::simt::q8_refresh {
 inline int launch(qkg_simt_call_v2 const& d,qkg_simt_config_v1 const& f) {
     observed=d;implementation=-100-q8_refresh_body(d,f);++launches;return QKG_OK;
@@ -201,12 +201,12 @@ int q8_token_cta_launch(qkg_simt_call_v2 const& d,int) {
 }
 }
 '''
-    token_source=(ROOT/'quactlize/execution/simt_token_cta_dispatch.cuh').read_text()
+    token_source=(ROOT/'quactlize/simt_gemv/simt_token_cta_dispatch.cuh').read_text()
     token_source=token_source.replace('#include "simt_token_cta_scope.hpp"',
-        '#include "quactlize/execution/simt_token_cta_scope.hpp"')
+        '#include "quactlize/simt_gemv/simt_token_cta_scope.hpp"')
     token_source=token_source.replace('#include "simt_token_cta.cuh"',token_stub)
     token_source=token_source.replace('#include "simt_q8_token_cta.cuh"','')
-    token_source=token_source.replace('#include "token_cta.inc"','#include "quactlize/execution/token_cta.inc"')
+    token_source=token_source.replace('#include "token_cta.inc"','#include "quactlize/simt_gemv/token_cta.inc"')
     (tmp_path/'simt_token_cta_dispatch.cuh').write_text(token_source)
     generated=[]
     for q in simt_codegen.QTYPES:
@@ -215,10 +215,10 @@ int q8_token_cta_launch(qkg_simt_call_v2 const& d,int) {
         generated.append(path)
     main=tmp_path/'entry.cpp'
     main.write_text(r'''#include "measured_decode.cuh"
-#include "quactlize/execution/simt_validation.hpp"
-#include "quactlize/execution/simt_common_scope.hpp"
-#include "quactlize/execution/simt_q8_refresh.hpp"
-#include "quactlize/execution/simt_token_cta_scope.hpp"
+#include "quactlize/simt_gemv/simt_validation.hpp"
+#include "quactlize/simt_gemv/simt_common_scope.hpp"
+#include "quactlize/simt_gemv/simt_q8_refresh.hpp"
+#include "quactlize/simt_gemv/simt_token_cta_scope.hpp"
 #include <cassert>
 using namespace quactlize::execution;
 static void check(qkg_call_v1 c,qkg_simt_config_v1 f,int compute,bool measured) {
@@ -268,19 +268,19 @@ int main() {
 {qkg_call_v1 c{};c.qtype=Q;c.mode=Mode;c.n=N;c.k=K;c.experts=E;c.topk=Top; \
 c.channels=Ch;c.rows=Top;c.input_type=QKG_F32; \
 check(c,{1,sizeof(qkg_simt_config_v1),V,C,W,P,S},Compute,true);}
-#include "quactlize/execution/measured_decode.inc"
+#include "quactlize/simt_gemv/measured_decode.inc"
 #undef QDM
 #define Q8R(N,K,M,C,W,Body) \
 {qkg_call_v1 c{};c.qtype=8;c.mode=QKG_DENSE;c.n=N;c.k=K;c.experts=1;c.topk=1; \
 c.channels=1;c.rows=M;c.input_type=QKG_F32; \
 check(c,{1,sizeof(qkg_simt_config_v1),5,C,W,4,1},0,true);}
-#include "quactlize/execution/q8_refresh.inc"
+#include "quactlize/simt_gemv/q8_refresh.inc"
 #undef Q8R
 #define QTC(Q,N,K,M,V,C,W,P,S,Window) \
 {qkg_call_v1 c{};c.qtype=Q;c.mode=QKG_DENSE;c.n=N;c.k=K;c.experts=1;c.topk=1; \
 c.channels=1;c.rows=M;c.input_type=QKG_F32; \
 check(c,{1,sizeof(qkg_simt_config_v1),V,C,W,P,S},0,true);}
-#include "quactlize/execution/token_cta.inc"
+#include "quactlize/simt_gemv/token_cta.inc"
 #undef QTC
 for(int q:{8,10,11,12,13,14}) for(int tokens=1;tokens<=8;++tokens) for(int mode:{0,2})
 for(int compute:{0,1}) for(int split:{1,2,4,8}) {
@@ -292,5 +292,5 @@ for(int compute:{0,1}) for(int split:{1,2,4,8}) {
 ''')
     exe=tmp_path/'entries'
     subprocess.run(['g++','-std=c++17','-O1','-I'+str(tmp_path),'-I'+str(ROOT),
-                    ROOT/'quactlize/execution/simt.cpp',*generated,main,'-o',exe],check=True)
+                    ROOT/'quactlize/simt_gemv/simt.cpp',*generated,main,'-o',exe],check=True)
     subprocess.run([exe],check=True)

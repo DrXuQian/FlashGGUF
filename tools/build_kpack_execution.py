@@ -14,9 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from quactlize.runtime.compiler import FLAGS, LIBRARIES, sha
 from quactlize.runtime.target import flags_for_arch
-from quactlize.execution import q4_decode_codegen, simt_codegen
-from quactlize.execution.q8_refresh import capability as q8_capability
-from quactlize.execution.token_cta_policy import capability as token_capability
+from quactlize.simt_gemv import q4_decode_codegen, simt_codegen
+from quactlize.simt_gemv.q8_refresh import capability as q8_capability
+from quactlize.simt_gemv.token_cta_policy import capability as token_capability
 
 
 def build(sdk, output, jobs, variant="production", *, arch='ppu_10'):
@@ -29,17 +29,19 @@ def build(sdk, output, jobs, variant="production", *, arch='ppu_10'):
     token_receipt = token_capability()
     from tools.generate_q8_refresh import catalog as q8_catalog, header as q8_header
     for name, text in [('q8_refresh.inc', q8_catalog()), ('simt_q8_refresh.cuh', q8_header())]:
-        if (ROOT/'quactlize/execution'/name).read_text() != text:
+        if (ROOT/'quactlize/simt_gemv'/name).read_text() != text:
             raise ValueError('stale Q8 binding; run tools/generate_q8_refresh.py')
     for path in [sdk / "bin/hgcc", *[sdk / "lib" / f"lib{x}.so" for x in LIBRARIES]]:
         if not path.is_file():
             raise ValueError(f"missing SDK input: {path}")
     output.mkdir(parents=True, exist_ok=False)
-    source = ROOT / "quactlize/execution"
+    source = ROOT / "quactlize/simt_gemv"
+    execution = ROOT / "quactlize/execution"
     gemv_source = source / "gemv.cu"
     extra_sources = []
     includes = [
         source,
+        execution,
         ROOT / "quactlize/include",
         ROOT / "third_party/actlize/include",
         ROOT / "third_party/actlize/tools/util/include",
@@ -63,10 +65,10 @@ def build(sdk, output, jobs, variant="production", *, arch='ppu_10'):
             if p.is_file() and p.suffix in ('.h','.hpp','.cuh'):
                 hashes[str(p.relative_to(ROOT))]=sha(p)
     for p in (q4_decode_codegen.POLICY, q4_decode_codegen.POLICY.with_suffix('.hpp'),
-              ROOT/'quactlize/execution/q4_decode_codegen.py',
-              ROOT/'quactlize/execution/simt_codegen.py',
-              ROOT/'quactlize/execution/q8_refresh.py',
-              ROOT/'quactlize/execution/token_cta_policy.py',
+              ROOT/'quactlize/simt_gemv/q4_decode_codegen.py',
+              ROOT/'quactlize/simt_gemv/simt_codegen.py',
+              ROOT/'quactlize/simt_gemv/q8_refresh.py',
+              ROOT/'quactlize/simt_gemv/token_cta_policy.py',
               ROOT/'policies/kpack_token_cta_v1.json',
               ROOT/'policies/kpack_decode_refresh_v1.json',
               ROOT/'policies/kpack_dense_decode_v1.json',
@@ -91,12 +93,12 @@ def build(sdk, output, jobs, variant="production", *, arch='ppu_10'):
         [("q8", source / "gemv.cu", ["-DQKG_QTYPE=8"])]
         + [(f"q{q}", gemv_source, [f"-DQKG_QTYPE={q}"]) for q in range(10, 15)]
         + [
-            ("metadata", source / "metadata.cu", []),
+            ("metadata", execution / "metadata.cu", []),
             ("dispatch", source / "dispatch.cpp", []),
             ("q4_decode", source / "q4_decode.cpp", []),
             ("q4_decode_io", source / "q4_decode_io.cu", []),
             ("simt_dispatch", source / "simt.cpp", []),
-            ("moe_mixed", source / "moe.cu", []),
+            ("moe_mixed", execution / "moe.cu", []),
         ]
         + selected_sources
         + [("adapters", p, []) for p in extra_sources]

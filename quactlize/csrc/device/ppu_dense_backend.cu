@@ -24,7 +24,7 @@
 
 #include "fpA_intB_ppu.cuh"
 #include "moe_grouped_ppu.cuh"
-#include "gemv_lowbit/gemv_rt.hpp"
+#include "../../simt_gemv/lowbit/gemv_rt.hpp"
 #include "ppu_dense_shipping_policy.hpp"
 #include "ppu_grouped_shipping_policy.hpp"
 #include "ppu_kquant_measured_policy.hpp"

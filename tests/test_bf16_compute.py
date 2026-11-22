@@ -49,7 +49,7 @@ def test_old_half_contract_is_not_silently_promoted():
     grouped=(ROOT/"quactlize/runtime/module.cuh").read_text()
     assert "if constexpr(QK_USE_BF16_COMPUTE) return QK_UNSUPPORTED" in grouped
     assert "d->compute_type==quactlize::runtime::compute_type" in grouped
-    simt=(ROOT/"quactlize/execution/simt_activation.cuh").read_text()
+    simt=(ROOT/"quactlize/simt_gemv/simt_activation.cuh").read_text()
     assert "struct Activation<Input, 0> : q4_s1::Activation<Input>" in simt
     assert "__floats2bfloat162_rn(x,y)" in simt
     assert "clamp" not in simt
@@ -60,7 +60,7 @@ def test_compute_abi_sizes_match_c(tmp_path):
     from quactlize.decode.native_compute import DenseComputeCall, GroupedComputeCall, ComputeIdentity
     from quactlize.execution.native import SimtCallV2
     source=tmp_path/"sizes.cpp"
-    source.write_text('#include "quactlize/decode/api.h"\n#include "quactlize/execution/simt.h"\n'
+    source.write_text('#include "quactlize/decode/api.h"\n#include "quactlize/simt_gemv/simt.h"\n'
         '#include <cstdio>\nint main(){std::printf("%zu %zu %zu %zu %zu\\n",sizeof(qkd_dense_call_v2),'
         'sizeof(qk_compute_device_call_v3),sizeof(qkd_compute_identity_v2),sizeof(qk_compute_identity_v3),'
         'sizeof(qkg_simt_call_v2));}\n')

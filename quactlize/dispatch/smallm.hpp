@@ -1,6 +1,6 @@
 #pragma once
 #include "policy.hpp"
-#include "../execution/simt_validation.hpp"
+#include "../simt_gemv/simt_validation.hpp"
 #include "../../policies/kpack_smallm_v1.hpp"
 
 namespace quactlize::dispatch::smallm {

@@ -66,10 +66,11 @@ def build(args):
     owners = [shared / p for p in ("quactlize_ppu_config.h", "ppu_format_config.inc", "ppu_format_config.hpp",
               "ppu_placed_arrangement.hpp", "q4_kpack4_offline.hpp", "q4_n16k64_direct_offline.hpp",
               "kquant_kpack_offline.hpp", "q8_kpack2.hpp", "gguf_scale_layout.hpp")]
+    simt = ROOT / "quactlize/simt_gemv/ppu17"
     identity["sources"] = {str(p.relative_to(ROOT)): sha(p)
                            for p in sorted(list(HERE.glob("*.h*")) + list(HERE.glob("*.cuh")) +
                                            list(HERE.glob("*.cu")) + list(HERE.glob("*.cpp")) +
-                                           [HERE / "exports.map"] + owners)}
+                                           list(simt.glob("*.cuh")) + [HERE / "exports.map"] + owners)}
     identity["builder_sha256"] = sha(__file__)
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     root = output / key[:20]
