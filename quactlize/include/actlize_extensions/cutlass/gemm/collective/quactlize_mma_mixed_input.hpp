@@ -1005,8 +1005,7 @@ public:
       FrgTensorC &accum,
       KTileIterator k_tile_iter, int k_tile_count,
       int thread_idx,
-      char *smem_buf,
-      int issuer_warp_base = 0)
+      char *smem_buf)
   {
 
     static_assert(is_rmem<FrgTensorC>::value, "C tensor must be rmem resident.");
@@ -1015,11 +1014,7 @@ public:
     static_assert(rank(SmemLayoutB{}) == 3,
       "MainloopPPUCpAsync must have a pipeline mode in the smem layout.");
 
-    // A cooperative K driver can place several equal-sized mainloop cohorts
-    // in one CTA. The caller supplies cohort-local thread indices and storage;
-    // only the AIU issuer's physical warp identity also needs rebasing.
-    // The ordinary call retains the exact zero-offset path.
-    int warp_idx = canonical_warp_idx_sync() - issuer_warp_base;
+    int warp_idx = canonical_warp_idx_sync();
     int aiu_warp_group_thread_idx = warp_idx * 32;
 
     Tensor gA = get<0>(load_inputs);

@@ -33,7 +33,6 @@ HOST = (
     "test_q2_0.py",
     "test_serving.py",
     "test_wheel.py",
-    "test_affine_contract.py",
     "test_installed_gate_reporting.py",
     "test_zw890_library.py",
 )

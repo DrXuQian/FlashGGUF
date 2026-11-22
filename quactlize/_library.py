@@ -24,21 +24,17 @@ PUBLIC_EXPORTS = (
     "quactlize_ppu_router_run_v1", "quactlize_ppu_swiglu_run_v1", "quactlize_ppu_merge_run_v1",
     *("quactlize_serving_" + s for s in (
         "prepare_v1", "error_v1", "router_v2", "swiglu_v2", "gather_rows_v1", "merge_v1")),
-    *("quactlize_ppu_w4a16_" + s + "_v1" for s in (
-        "config_count", "mapping", "config", "config_zero_mode", "pack_host",
-        "select", "query", "prepare", "run", "destroy", "error")),
 )
 REQUIRED_PAYLOADS = (
     PUBLIC_LIBRARY,
     *("quactlize-runtime/" + name for name in (
         "libquactlize_kpack_dispatch.so", "libquactlize_ppu_execution.so", "libquactlize_ppu_prefill.so",
         "final-selection.json", "prefill-confirmed.json", "dense-prefill.json", "moe-prefill.json",
-        "prefill-runtime.json", "affine.json", "jit/tools/kpack_jit.py", "jit/quactlize/runtime/compiler.py",
+        "prefill-runtime.json", "jit/tools/kpack_jit.py", "jit/quactlize/runtime/compiler.py",
         "jit/third_party/actlize/include/cute/arch/mma_ppu0010.hpp")),
     *("include/" + name for name in (
         "quactlize/packing/api.h", "quactlize/dense/api.h", "quactlize/moe/matmul.h",
         "quactlize/ffn/api.h", "quactlize/compat/api.h", "quactlize/compat/serving.h",
-        "quactlize/affine/api.h",
         "quactlize_ppu_config.h")),
 )
 

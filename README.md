@@ -1,6 +1,11 @@
-# Quactlize
+# FlashGGUF
 
-Weight-only quantized GEMM/GEMV for T-Head PPU.
+Weight-only quantized GEMM/GEMV for GGUF models on T-Head PPU.
+
+Ordinary (non-GGUF) affine INT4/g32, including the kernels compared against
+Humming, is now maintained in [FlashQuant](https://github.com/DrXuQian/FlashQuant).
+For that API use `flashquant.affine` and link `libflashquant.so`; the C symbol
+names remain unchanged. GGUF users still use `quactlize` and `libncp_quactlize.so`.
 
 PPU1.0 ZW610 and ZW810E reuse ZW810's exact selection tables and buckets.
 Recorded latencies remain ZW810 measurements, used as selection estimates on
@@ -16,7 +21,7 @@ admission. The default target remains `ppu_10`; packages are not interchangeable
 `develop` contains production code, admitted selection tables, package builders
 and product correctness tests. `main` is the separately curated release line.
 Debug kernels, benchmarks, Asys/ACU sweeps, historical results and their tests
-are maintained on [`experiments/ppu-tuning`](https://github.com/DrXuQian/QUactlize/tree/experiments/ppu-tuning).
+are maintained on [`experiments/ppu-tuning`](https://github.com/DrXuQian/FlashGGUF/tree/experiments/ppu-tuning).
 The complete pre-cleanup snapshot is `c436ce5e4dc14ec60149b973342749d16125dba4`.
 
 ## Build and test

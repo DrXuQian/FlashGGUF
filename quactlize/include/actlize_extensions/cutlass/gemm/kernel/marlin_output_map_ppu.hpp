@@ -36,13 +36,4 @@ CUTLASS_HOST_DEVICE constexpr int output_col_offset(int lane, int value) {
   return lane % 4 + ((value % 4) << 2);
 }
 
-// One slot holds four FP32 values from one output row. Call only for live
-// rows, with value at the start of a four-value fragment group.
-template <int InstructionM>
-CUTLASS_HOST_DEVICE constexpr int compact_partial_vector_slot(
-    int rows, int n_atoms, int warp_n, int lane, int n_atom, int value) {
-  return ((warp_n * n_atoms + n_atom) * rows + output_row<InstructionM>(lane, value)) * 4 +
-         output_col_offset<InstructionM>(lane, 0);
-}
-
 }  // namespace cutlass::gemm::kernel::marlin_ppu_detail
