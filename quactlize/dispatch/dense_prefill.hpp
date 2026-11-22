@@ -1,11 +1,16 @@
 #pragma once
 #include "policy.hpp"
+#include <algorithm>
+#include <array>
+#include <iterator>
+#include <utility>
 
 namespace quactlize::dispatch::dense_prefill {
 // Whole-call F16 dense recipes. dequant is SF's scale-prepass config for TC,
 // or the typed dense weight-helper ID for Full. io=-1 means original row casts.
 struct Choice { int route, io, dequant; Config tc; bool dequant_first=false; };
 struct Exact { int q,m,n,k,choice; };
+template<int Count> struct Confirmed { int q,n,k,ms[Count]; };
 struct Bucket { int q,mb,nb,kb,aspect,nlo,nhi,klo,khi,choice; int mlo=0,mhi=8192; };
 #include "dense_prefill.inc"
 
@@ -30,18 +35,34 @@ inline bool legal(Choice const& c,qks_request_v1 const& r) {
 // endpoints. No dtype transfer, kernel launch, runtime tuning or remote donor.
 inline Decision select_direct(qks_request_v1 const& r,int compute) {
     if(!domain(r,compute)) return {};
-    for(auto const& p:kExact)
-        if(p.q==r.qtype && p.m==r.m && p.n==r.n && p.k==r.k && legal(kChoices[p.choice],r))
-            return {&kChoices[p.choice],QKS_DENSE_PREFILL_EXACT};
+    const std::array shape{r.qtype,r.m,r.n,r.k};
+    auto key = [](Exact const& p) { return std::array{p.q,p.m,p.n,p.k}; };
+    auto p = std::lower_bound(kExceptions.begin(),kExceptions.end(),shape,
+        [&](Exact const& row, auto const& value) { return key(row)<value; });
+    if(p!=kExceptions.end() && key(*p)==shape && legal(kChoices[p->choice],r))
+        return {&kChoices[p->choice],QKS_DENSE_PREFILL_EXACT};
     // Refitted M/N/K intervals keep conflicting neighboring M anchors apart.
     // Off-grid choices remain bounded predictions, never exact measurements.
     int mb=band(r.m<16?16:r.m),nb=band(r.n),kb=band(r.k);
     int aspect=int64_t(r.n)>=2LL*r.k?1:int64_t(r.k)>=2LL*r.n?2:r.n>=r.k?0:3;
-    for(auto const& b:kBuckets)
-        if(b.q==r.qtype && b.mb==mb && b.nb==nb && b.kb==kb && b.aspect==aspect &&
+    // The fitter emits buckets in (q, mb, nb, kb, aspect) order.
+    auto group = std::pair{r.qtype,mb};
+    auto end = std::end(kBuckets);
+    auto first = std::lower_bound(std::begin(kBuckets),end,group,
+        [](Bucket const& b, auto key) { return std::pair{b.q,b.mb}<key; });
+    for(auto it=first; it!=end && it->q==r.qtype && it->mb==mb; ++it) {
+        auto const& b=*it;
+        if(b.nb==nb && b.kb==kb && b.aspect==aspect &&
             r.m>=b.mlo && r.m<=b.mhi && r.n>=b.nlo && r.n<=b.nhi &&
-            r.k>=b.klo && r.k<=b.khi && legal(kChoices[b.choice],r))
+            r.k>=b.klo && r.k<=b.khi && legal(kChoices[b.choice],r)) {
+            // Same decision for this interval; only the listed M were measured.
+            for(auto const& f:kConfirmed) if(f.q==r.qtype && f.n==r.n && f.k==r.k) {
+                for(int m:f.ms) if(m==r.m) return {&kChoices[b.choice],QKS_DENSE_PREFILL_EXACT};
+                break;
+            }
             return {&kChoices[b.choice],QKS_DENSE_PREFILL_BUCKET};
+        }
+    }
     return {};
 }
 inline Decision select(qks_request_v1 const& r,int compute) {

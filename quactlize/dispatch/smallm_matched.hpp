@@ -39,25 +39,24 @@ inline Selection select(qkg_simt_call_v2 const& d) {
                r.channels==c.channels && r.compute==d.compute_type;
     };
     for(auto const& r:data::kExact) if(family(r) && r.n==c.n && r.k==c.k && r.tokens==m &&
-        eligible(data::kGuards[data::kGuardIndex[&r-data::kExact]],c))
-        return {&r,data::kPolicy[&r-data::kExact],&data::kChoices[r.choice],data::kDequant[&r-data::kExact]};
+        eligible(data::kChoices[r.guard],c))
+        return {&r,r.policy,&data::kChoices[r.choice],r.dequant};
     for(auto const& r:data::kOpen) if(family(r) && r.n==c.n && r.k==c.k && r.tokens==m) return {};
-    data::Row const* donor=nullptr;int distance=INT32_MAX;
+    data::Bucket const* best=nullptr;int distance=INT32_MAX;
     for(auto const& b:data::kBuckets) {
         if(!family(b) || b.m!=smallm::token_bin(m)) continue;
         auto const& r=data::kExact[b.row];
         if(int64_t(c.n)>int64_t(r.n)*2 || int64_t(r.n)>int64_t(c.n)*2 ||
            int64_t(c.k)>int64_t(r.k)*2 || int64_t(r.k)>int64_t(c.k)*2 ||
-           !eligible(data::kGuards[data::kGuardIndex[b.row]],c)) continue;
+           !eligible(data::kChoices[r.guard],c)) continue;
         int delta=std::abs(smallm::log2(c.n)-b.n)+std::abs(smallm::log2(c.k)-b.k);
-        if(delta<distance) {distance=delta;donor=&r;}
+        if(delta<distance) {distance=delta;best=&b;}
     }
-    if(!donor) return {};
-    auto index=donor-data::kExact;
+    if(!best) return {};
     // Donors are generated separately: exact-only evidence cannot silently
     // change bucket behavior. This also keeps Q4's shape-specialized body out.
-    auto const& generic=data::kBucketChoices[data::kBucketIndex[index]];
+    auto const& generic=data::kChoices[best->choice];
     if(generic.kind==QKS_SMALLM_Q4) return {};
-    return {donor,QKS_MATCHED_BUCKET,&generic,data::kBucketDequant[index]};
+    return {&data::kExact[best->row],QKS_MATCHED_BUCKET,&generic,best->dequant};
 }
 } // namespace quactlize::dispatch::matched

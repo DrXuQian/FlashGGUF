@@ -309,7 +309,9 @@ void explicit_candidates() {
     std::puts("DENSE_CANDIDATES_HOST PASS precision+default-cache-isolation+admission timing=NOT_MEASURED");
 }
 
-void reviewed_prefill() {
+struct MeasuredShape { int q,m,n,k; };
+
+void reviewed_prefill(std::vector<MeasuredShape> const& shapes) {
     namespace data=quactlize::dispatch::dense_prefill;
     int exact=0,buckets=0;
     auto check=[&](quactlize_ppu_dense_params_v1 const& p,int policy) {
@@ -357,7 +359,7 @@ void reviewed_prefill() {
     for(auto [name,cu]:{std::pair{"PPU-ZW810",72},{"PPU-ZW610",64},
                        {"PPU-ZW810E",72},{"PPU-ZW810E",64}}) {
     test::compute_units=cu;test::device_name=name;
-    for(auto const& row:data::kExact) {
+    for(auto const& row:shapes) {
         auto p=test::params(row.q,row.m,row.n,row.k);
         check(p,QKS_DENSE_PREFILL_EXACT);++exact;
         // Same shape, different storage stride or explicit BF16 must not be
@@ -387,9 +389,9 @@ void reviewed_prefill() {
     std::cout<<"DENSE_PREFILL_HOST exact="<<exact<<" bucket_replays="<<buckets<<" gpu_execution=0\n";
 }
 
-void dense_m_controls() {
+void dense_m_controls(std::vector<MeasuredShape> const& shapes) {
     std::set<std::tuple<int,int,int>> families;
-    for(auto const& r:quactlize::dispatch::dense_prefill::kExact) families.emplace(r.q,r.n,r.k);
+    for(auto const& r:shapes) families.emplace(r.q,r.n,r.k);
     for(auto [q,n,k]:families) for(int m=1;m<=8;++m) {
         kImages.clear();auto ctx=test::context(0,true);
         auto p=test::params(q,m,n,k);auto raw=test::plan(*ctx,p);
@@ -419,8 +421,13 @@ void dense_m_controls() {
 }
 
 int main() {
-    dense_m_controls();
-    reviewed_prefill();
+    // Replay the evidence inventory, not the selector's internal representation.
+    std::vector<MeasuredShape> shapes;
+    MeasuredShape s{};
+    while(std::cin>>s.q>>s.m>>s.n>>s.k) shapes.push_back(s);
+    assert(std::cin.eof() && !shapes.empty());
+    dense_m_controls(shapes);
+    reviewed_prefill(shapes);
     using namespace quactlize::dispatch;
     size_t matched_count=0,cost_count=0,component_sf_count=0,token_count=0;
     // Each context has a separate device module cache. The test catalog is

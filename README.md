@@ -64,10 +64,16 @@ ordinary 2N projection with its measured selector. SwiGLU remains a separate
 transition for every M, followed by Down. GEMM-internal activation fusion is
 not enabled or linked into the public library.
 
-Dense prefill selection tries exact rows, bounded M/N/K buckets, then one
-N-doubling transfer for merged projections. The transfer keeps M/K/dtype and
-actual-shape legality, reports a bucket prediction, and never extrapolates FQ
-past M64. It is not an exact measurement of the doubled shape.
+Dense prefill has one default: use the measured M/N/K bucket. Store a separate
+choice only when a measured shape needs a different recipe or has no bucket.
+An exact measurement that agrees with the rule still reports `EXACT`; unmeasured
+M between two anchors remains a prediction. On a miss, a merged projection
+can try one N-doubling transfer; it never extrapolates FQ past M64.
+
+Maintain the evidence, not the generated C++ tables. After an admitted change
+to `policies/dense_prefill_v1.json`, run `python3 -m quactlize.dispatch.dense_prefill`.
+For decode, run `python3 tools/generate_decode_selection.py`; it keeps exact
+choices and off-grid donors distinct but stores each reader/TC recipe only once.
 
 The additive native16 [Flash-Next serving ABI](docs/serving.md) provides raw
 GGUF matmul, device-count router/row lookup and explicit SwiGLU rounding.
