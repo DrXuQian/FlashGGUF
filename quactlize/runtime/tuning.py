@@ -20,6 +20,7 @@ import time
 
 ROUTES = ("fq-dense", "sf-dense", "fq-grouped", "sf-grouped")
 GROUPS = {10: 16, 11: 16, 12: 32, 13: 32, 14: 16}
+GPTQ_W4_G32 = 0x4750545134473201
 
 
 def digest(value):
@@ -42,6 +43,7 @@ class Request:
     k: int
     m: int
     rows: tuple = ()
+    weight_style: str = "gguf"
 
     def __post_init__(self):
         if (
@@ -55,6 +57,9 @@ class Request:
             or self.k % (512 if self.qtype in (11, 14) else 256)
         ):
             raise ValueError("unsupported K-pack request")
+        if self.weight_style not in ("gguf","gptq") or (self.weight_style=="gptq"
+                and (self.qtype!=12 or not self.route.startswith("sf-"))):
+            raise ValueError("GPTQ requires a W4/group32 SF request")
         if self.grouped:
             if (
                 not isinstance(self.rows, tuple)
@@ -72,11 +77,16 @@ class Request:
 
     @property
     def mapping(self):
+        if self.weight_style=="gptq":
+            return GPTQ_W4_G32
         return 0x51344B5034540001 if self.qtype == 12 else 0x514B504B54000001
 
     @property
     def exact_key(self):
-        return digest(asdict(self))
+        fields=asdict(self)
+        if self.weight_style=="gguf":
+            fields.pop("weight_style")  # existing receipts retain their keys
+        return digest(fields)
 
     @property
     def bucket(self):

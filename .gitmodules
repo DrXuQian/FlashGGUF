@@ -5,3 +5,6 @@
 	path = third_party/actlize
 	url = https://github.com/DrXuQian/actlize.git
 	branch = ppu-w4a16-dev
+[submodule "third_party/flashquant"]
+	path = third_party/flashquant
+	url = https://github.com/DrXuQian/FlashQuant.git

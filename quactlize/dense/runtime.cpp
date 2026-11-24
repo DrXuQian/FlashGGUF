@@ -1,5 +1,6 @@
 #include "api.h"
 #include "validation.hpp"
+#include "warpk.hpp"
 #include "../dispatch/api.h"
 #include "../dispatch/selection.hpp"
 #include "../dispatch/smallm.hpp"
@@ -42,7 +43,7 @@ fs::path runtime_directory() {
 }
 
 struct Context;
-enum class Kind { Simt, Q4, Tc, Full };
+enum class Kind { Simt, Q4, Tc, Full, WarpK };
 struct Plan {
     Context* owner=nullptr;
     Kind kind=Kind::Tc;
@@ -232,7 +233,7 @@ void select(Plan& p) {
 }
 
 void select_candidate(Plan& p,quactlize_ppu_dense_candidate_v1 const& c) {
-    require(c.version==1 && c.size==sizeof(c) && c.kind>=0 && c.kind<=3 &&
+    require(c.version==1 && c.size==sizeof(c) && c.kind>=0 && c.kind<=QUACTLIZE_DENSE_CANDIDATE_SF_WARPK &&
         (c.native_f16==0 || c.native_f16==1) && (c.legacy_adapters==0 || c.legacy_adapters==1) &&
         c.dequant_config>=-1 && c.dequant_config<=12 && std::memchr(c.parent,0,sizeof(c.parent)),
         "invalid dense candidate ABI");
@@ -241,6 +242,20 @@ void select_candidate(Plan& p,quactlize_ppu_dense_candidate_v1 const& c) {
     bool tile=c.tm || c.tn || c.tk || c.wm || c.wn || c.stages || c.ap || c.delivery_n || c.grid_mode || c.grid_b;
     bool reader=c.variant || c.columns || c.warps || c.values;
     p.request=request_for(p.params);p.request.route=c.route;
+    if (c.kind==QUACTLIZE_DENSE_CANDIDATE_SF_WARPK) {
+#ifdef QUACTLIZE_WITH_WARPK
+        require(c.route==QK_DENSE_SF && c.native_f16 && !c.legacy_adapters && c.split==1 &&
+            c.dequant_config==-1 && !c.parent[0] && !tile && !reader && p.params.qtype==12 &&
+            warpk::supported(p.params.m,p.params.n,p.params.k) && p.owner->dense_policy_device(),
+            "warp-K requires PPU1.0 canonical dense Q4_K SF, F16 and a whole N/K tile");
+        require(warpk::initialize()==0,"warp-K shared memory initialization failed");
+        p.kind=Kind::WarpK;p.native_f16=true;
+        p.plane_bytes=uint64_t(p.params.n)*(p.params.k/32)*2;
+        return;
+#else
+        throw std::runtime_error("Q4_K warp-K not built; use --with-warpk on PPU1.0");
+#endif
+    }
     if (c.kind==3) {
         require(c.route==QUACTLIZE_DENSE_FULL_BF16 && p.params.qtype!=8 && p.params.m>=128 &&
             !tile && !reader && !c.parent[0] && !c.native_f16 && !c.legacy_adapters && !c.split &&
@@ -325,7 +340,11 @@ void prepare(Plan& p,quactlize_ppu_dense_candidate_v1 const* candidate=nullptr) 
     if (p.copy_output) p.output_offset=reserve(cursor,uint64_t(p.params.m)*p.params.n*(p.native_f16?2:4));
     if (p.plane_bytes) {p.scale_offset=reserve(cursor,p.plane_bytes);p.zero_offset=reserve(cursor,p.plane_bytes);}
     p.kernel_offset=reserve(cursor,p.kernel_bytes);info.workspace_bytes=cursor;
-    if (p.kind==Kind::Tc) {
+    if (p.kind==Kind::WarpK) {
+        info.route=QUACTLIZE_DENSE_SF_TC;info.policy=QKS_PREDICTED;info.split=1;
+        std::snprintf(info.config,sizeof(info.config),"sf:q4k:warpk:tm%d:tn%d:tk%d:wn%d:wk%d:s%d",
+            warpk::TM,warpk::TN,warpk::TK,warpk::WN,warpk::WK,warpk::stages);
+    } else if (p.kind==Kind::Tc) {
         dispatch_check(quactlize_kpack_dispatch_prepare_dynamic_v1(p.owner->dispatcher,&p.tc,&p.handle));
         info.route=p.request.route==QK_DENSE_FQ?QUACTLIZE_DENSE_FQ_TC:QUACTLIZE_DENSE_SF_TC;
         info.policy=p.tc.policy;info.split=p.tc.split;
@@ -404,6 +423,12 @@ void run(Plan const& p,float const* a,float* output,void* workspace,uint64_t byt
     }
     if (p.copy_output) result=reinterpret_cast<float*>(base+p.output_offset);
     void* scratch=p.kernel_bytes ? base+p.kernel_offset : nullptr;
+#ifdef QUACTLIZE_WITH_WARPK
+    if (p.kind==Kind::WarpK) {
+        require(warpk::launch(p.params.m,p.params.n,p.params.k,input,p.low,metadata,zero,result,stream)==0,
+            "Q4_K SF warp-K launch failed");
+    } else
+#endif
     if (p.kind==Kind::Simt || p.kind==Kind::Q4) {
         auto d=simt_call(p);auto& c=d.call;
         c.a=input;c.output=result;c.workspace=scratch;c.workspace_bytes=p.kernel_bytes;c.stream=stream;

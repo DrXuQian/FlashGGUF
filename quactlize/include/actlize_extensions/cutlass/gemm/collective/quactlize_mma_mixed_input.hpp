@@ -2086,13 +2086,10 @@ private:
       }
     }
     else if constexpr (KernelConversionMode == ConversionMode::ConvertAndScaleWithZero) {
-      auto tCrS = cute::get<1>(partitioned_extra_info);
-      auto tCrZ = cute::get<3>(partitioned_extra_info);
       if constexpr (!FINE) {
         cute::for_each(cute::make_int_sequence<K_ATOM_PER_COPY>{}, [&] (auto i_) {
           constexpr int atom_idx = K_BLOCK_STATIC * K_ATOM_PER_COPY + decltype(i_)::value;
-          transform_fragment(tCrB_mma(_, _, Int<atom_idx>{}), tCrS(_, _, 0), tCrB_mma(_, _, Int<atom_idx>{}), cute::multiplies{});
-          transform_fragment(tCrB_mma(_, _, Int<atom_idx>{}), tCrZ(_, _, 0), tCrB_mma(_, _, Int<atom_idx>{}), cute::plus{});
+          MetadataPolicy::apply(tCrB_mma(_, _, Int<atom_idx>{}), partitioned_extra_info);
         });
       } else {
         // FINE: see ConvertAndScale note -- write via the copy VIEWs, read the ORIGINAL fragments back.
@@ -2105,10 +2102,7 @@ private:
             MetadataPolicy::reload(partitioned_extra_info, tiled_copy_and_views,
                                    FinePolicy::group(atom_idx), read_stage);
           }
-          transform_fragment(tCrB_mma(_, _, Int<atom_idx>{}), cute::get<1>(partitioned_extra_info)(_, _, 0),
-                          tCrB_mma(_, _, Int<atom_idx>{}), cute::multiplies{});
-          transform_fragment(tCrB_mma(_, _, Int<atom_idx>{}), cute::get<3>(partitioned_extra_info)(_, _, 0),
-                          tCrB_mma(_, _, Int<atom_idx>{}), cute::plus{});
+          MetadataPolicy::apply(tCrB_mma(_, _, Int<atom_idx>{}), partitioned_extra_info);
         });
       }
     }

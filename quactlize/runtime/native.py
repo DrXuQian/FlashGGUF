@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .compiler import LIBRARIES, sha
-from .tuning import GROUPS, ROUTES, UnsupportedTactic, digest
+from .tuning import GPTQ_W4_G32, GROUPS, ROUTES, UnsupportedTactic, digest
 
 
 @lru_cache(maxsize=16)
@@ -196,6 +196,7 @@ class Module:
                 for f in ("qtype", "tm", "tn", "tk", "wm", "wn", "stages", "ap")
             )
             or identity.delivery_n != p["dn"]
+            or ((identity.mapping_id == GPTQ_W4_G32) != (p.get("weight_style") == "gptq"))
         ):
             raise ValueError("module ABI/parent identity differs")
 
@@ -271,7 +272,8 @@ class NativeBackend:
         if module is None:
             raise UnsupportedTactic("parent has not been compiled/loaded")
         p = module.record["parent"]
-        if request.qtype != p["qtype"] or request.route != p["route"]:
+        if (request.qtype != p["qtype"] or request.route != p["route"] or
+                request.weight_style != p.get("weight_style","gguf")):
             raise UnsupportedTactic("parent route/format differs")
         rows = (C.c_int32 * len(request.rows))(*request.rows) if request.rows else None
         call = Call(

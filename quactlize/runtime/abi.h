@@ -1,6 +1,11 @@
 #pragma once
 #include <stdint.h>
 
+// Mapping of the full prepared SF operand (NOT a new low-code layout):
+// group32 K-pack4 uint4 + scale and exact (8-zp) planes, [E,K/32,N].
+// A GGUF Q4_K SF call with post-scale floating zeros must not match it.
+#define QK_MAPPING_GPTQ_W4_G32 UINT64_C(0x4750545134473201)
+
 // Versioned, device-pointer-only interface for one compiled K-pack parent.
 // No GGUF repacking, allocation, profiling or implicit configuration choice is
 // performed by prepare/run. Callers own all buffers and the execution stream.
@@ -43,6 +48,14 @@ typedef struct {
   uint64_t workspace_bytes;
   void* stream;
 } qk_call_v1;
+
+// Optional --with-warpk public package: prepared planes, contiguous FP16
+// A/C, FP32 accumulation. mapping_id distinguishes resident GGUF SF S/Z
+// from GPTQ SF S/(8-zp). Prepare takes address-free geometry on current
+// device, outside capture. Run can change all addresses/stream; no scratch.
+int quactlize_ppu_warpk_prepare_v1(qk_call_v1 const*,void**);
+int quactlize_ppu_warpk_run_v1(void*,qk_call_v1 const*);
+void quactlize_ppu_warpk_destroy_v1(void*);
 
 // Additive device-only grouped successor. The embedded call keeps its v1
 // layout/version; rows_host and rows_device must be NULL. offsets_device is

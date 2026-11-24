@@ -111,6 +111,11 @@ def verify(output):
         ['nm', '-D', '--defined-only', str(output / PUBLIC_LIBRARY)], text=True).splitlines() if line.split()}
     if set(PUBLIC_EXPORTS) - exports:
         raise ValueError('public exports missing: ' + repr(sorted(set(PUBLIC_EXPORTS) - exports)))
+    if 'warpk' in manifest:
+        names={'quactlize_ppu_warpk_'+x+'_v1' for x in ('prepare','run','destroy')}
+        if (arch!='ppu_10' or not names<=exports or
+                'include/quactlize/runtime/abi.h' not in manifest['payloads']):
+            raise ValueError('incomplete PPU1.0 warp-K payload')
     if 'final_selection' in manifest:
         receipt = manifest['final_selection']
         if receipt['path'] != 'quactlize-runtime/final-selection.json' or receipt['path'] not in manifest['payloads']:
@@ -178,8 +183,26 @@ def compatibility_sources(arch):
             'quactlize/compat/serving.cu')
 
 
-def build(sdk, output, jobs, *, arch='ppu_10'):
+def warpk_headers(arch):
+    if arch!='ppu_10':
+        raise ValueError('--with-warpk currently requires PPU1.0')
+    dep=ROOT/'third_party/flashquant'
+    header=dep/'flashquant/include/actlize_extensions/cutlass/gemm/collective/kpack_warpk_ppu.hpp'
+    if not header.is_file():
+        raise ValueError('--with-warpk requires git submodule update --init third_party/flashquant')
+    pin=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD:third_party/flashquant'],text=True).strip()
+    rev=subprocess.check_output(['git','-C',str(dep),'rev-parse','HEAD'],text=True).strip()
+    if pin!=rev:
+        raise ValueError('FlashQuant checkout differs from FlashGGUF gitlink')
+    if subprocess.check_output(['git','-C',str(dep),'rev-parse','HEAD:third_party/actlize'])!=subprocess.check_output(
+            ['git','-C',str(ROOT),'rev-parse','HEAD:third_party/actlize']):
+        raise ValueError('FlashQuant and FlashGGUF require different actlize headers')
+    return dep/'flashquant/include',rev
+
+
+def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
     arch = selected_arch(arch)
+    warpk=warpk_headers(arch) if with_warpk else None
     flags = flags_for_arch(FLAGS, arch)
     host_defines = definitions(arch)
     # --library bypasses the legacy shell builder, including its gitlink guard.
@@ -204,6 +227,8 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
     public_sources = {p: sha(p) for directory in ('quactlize/dense', 'quactlize/dispatch', 'quactlize/moe', 'quactlize/routing', 'quactlize/ffn', 'quactlize/fusion', 'quactlize/simt_gemv', 'quactlize/compat')
                       for p in (ROOT / directory).iterdir() if p.is_file()}
     public_sources.update({p: sha(p) for p in (ROOT/'policies').iterdir() if p.suffix in ('.hpp', '.json')})
+    if warpk:
+        public_sources.update({p:sha(p) for p in warpk[0].rglob('*') if p.is_file() and p.suffix in HEADER_SUFFIXES})
     for name in ('native16.cuh','native16_geometry.hpp','native16_rows.cuh'):
         p=ROOT/'quactlize/execution'/name
         public_sources[p]=sha(p)
@@ -284,6 +309,12 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         obj = work / (name + '.o')
         command = ([str(sdk / 'bin/hgcc'), *flags] if source.endswith('.cu') else
                    ['g++', '-std=c++17', '-O2', '-fPIC', '-pthread', *host_defines])
+        if warpk and source in ('quactlize/dense/runtime.cpp','quactlize/dense/warpk.cu'):
+            command.append('-DQUACTLIZE_WITH_WARPK=1')
+            if source.endswith('.cu'):
+                # Keep the donor's *whole* header closure ahead of similarly
+                # named legacy headers. Reuse our identical actlize pin.
+                command.append('-I'+str(warpk[0]))
         run(name, [*command, *definitions, *['-I' + str(p) for p in include],
             '-c', str(ROOT / source), '-o', str(obj)])
         return obj
@@ -292,7 +323,8 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         objects = list(pool.map(compile_one, ('quactlize/dense/runtime.cpp', 'quactlize/dense/copy.cu',
             'quactlize/moe/matmul.cpp','quactlize/moe/selection.cpp',
             'quactlize/moe/scaffold.cu','quactlize/routing/route.cu','quactlize/ffn/ffn.cpp',
-            'quactlize/ffn/dense_swiglu.cu', *compatibility_sources(arch))))
+            'quactlize/ffn/dense_swiglu.cu', *compatibility_sources(arch),
+            *(('quactlize/dense/warpk.cu',) if warpk else ()))))
     objects += [work / 'packing' / (name + '.o') for name in ('sizes.cpp', 'ppu_pack.cu')]
     run('public', ['g++', '-shared', '-pthread', '-Wl,-Bsymbolic', '-Wl,-z,defs',
         '-Wl,-soname,' + PUBLIC_LIBRARY, '-Wl,-rpath,$ORIGIN/quactlize-runtime',
@@ -312,6 +344,10 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         path = output / 'include' / target
         path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, path)
+    if warpk:
+        target=output/'include/quactlize/runtime/abi.h'
+        target.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(ROOT/'quactlize/runtime/abi.h',target)
     compiler.check_inputs()
     if any(sha(p) != digest for p, digest in public_sources.items()):
         raise ValueError('provider/dispatcher sources changed during build')
@@ -348,6 +384,9 @@ def build(sdk, output, jobs, *, arch='ppu_10'):
         policy_scope=('ZW810_ESTIMATES_NATIVE_PPU15_GEOMETRY_NOT_ZW890_MEASUREMENTS' if arch=='ppu_15'
                       else 'ZW810_TABLES_AND_COMPATIBLE_PPU10_DEVICES'),
         performance_admission='NOT_MEASURED', seconds=time.monotonic() - start)
+    if warpk:
+        manifest['warpk']=dict(flashquant=warpk[1],explicit_only=True,
+                               styles=['gguf-sf','gptq-w4-g32'],performance_admitted=False)
     if source_files(ROOT) != provenance['source_hashes']:
         raise ValueError('package sources changed during public library build')
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -364,12 +403,14 @@ def main():
     parser.add_argument('--arch', choices=ARCHES, default='ppu_10',
                         help='explicit package/JIT target; ppu_15 selects native ZW890 kernels')
     parser.add_argument('--verify', action='store_true', help='verify an existing package without compilation')
+    parser.add_argument('--with-warpk',action='store_true',
+                        help='compile the pinned FlashQuant group32 warp-K candidate (PPU1.0 only)')
     args = parser.parse_args()
     if args.verify:
         verify(args.output)
         print('QUACTLIZE_PPU_PACKAGE VERIFIED device_admission=UNCHANGED')
     else:
-        build(args.sdk, args.output, args.jobs, arch=args.arch)
+        build(args.sdk, args.output, args.jobs, arch=args.arch, with_warpk=args.with_warpk)
 
 
 if __name__ == '__main__':

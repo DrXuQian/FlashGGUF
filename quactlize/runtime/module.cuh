@@ -34,7 +34,9 @@ constexpr int compute_type=QK_USE_BF16_COMPUTE ? QK_COMPUTE_BF16 : QK_COMPUTE_F1
 constexpr int metadata_type=std::is_same_v<GroupMetadata,cutlass::bfloat16_t> ? QK_METADATA_BF16 : QK_METADATA_F16;
 static_assert(qtype != 8 || (!packed && QK_AP == 0), "Q8_0 requires W8A16 with FP16 scale, no packed-A");
 using F = Format<qtype>;
-constexpr uint64_t mapping = qtype == 8 ? q8_kpack2::kMappingId : qtype == 12 ? UINT64_C(0x51344b5034540001)
+static_assert(!QK_SF_GPTQ || (qtype==12 && !packed && PPU_PACKED_SCALE==0),
+              "GPTQ W4/g32 is a prepared SF operand, never a GGUF packed unit");
+constexpr uint64_t mapping = QK_SF_GPTQ ? QK_MAPPING_GPTQ_W4_G32 : qtype == 8 ? q8_kpack2::kMappingId : qtype == 12 ? UINT64_C(0x51344b5034540001)
                                         : UINT64_C(0x514b504b54000001);
 constexpr bool needs_zero = !packed && qtype != 8;
 

@@ -240,10 +240,18 @@ CUTLASS_DEVICE void transform_metadata(A&& a, B&& b, C&& c, Op op) {
   else cute::transform(a, b, c, op);
 }
 
-template <bool HasZero, class BSlice, class Info>
+#ifndef QK_SF_GPTQ
+#define QK_SF_GPTQ 0
+#endif
+// A GPTQ SF parent takes losslessly prepared (center - uint4_zero) in the
+// zero plane. GGUF takes a *scaled* floating offset. Order is part of the
+// compiled parent, never a per-element branch or a re-quantization.
+template <bool HasZero, bool PreScaleCenter=(QK_SF_GPTQ!=0), class BSlice, class Info>
 CUTLASS_DEVICE void apply_metadata(BSlice&& b_slice, Info const& info) {
+  if constexpr (HasZero && PreScaleCenter)
+    transform_metadata(b_slice, cute::get<3>(info)(cute::_, cute::_, 0), b_slice, cute::plus{});
   transform_metadata(b_slice, cute::get<1>(info)(cute::_, cute::_, 0), b_slice, cute::multiplies{});
-  if constexpr (HasZero) {
+  if constexpr (HasZero && !PreScaleCenter) {
     transform_metadata(b_slice, cute::get<3>(info)(cute::_, cute::_, 0), b_slice, cute::plus{});
   }
 }

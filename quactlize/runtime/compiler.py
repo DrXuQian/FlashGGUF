@@ -102,6 +102,13 @@ def validate_parent(parent):
         or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", parent.get("symbol", ""))
     ):
         raise ValueError("invalid parent identity")
+    # The symbol is also the dispatch/prewarm index. Keep different weight
+    # contracts out of both each other's cache and each other's shortlist.
+    if parent.get("weight_style","gguf") not in ("gguf","gptq") or (
+        parent["symbol"].startswith("gptq_") != (parent.get("weight_style")=="gptq")
+    ) or (parent.get("weight_style")=="gptq" and
+          (parent["qtype"]!=12 or not parent["route"].startswith("sf-"))):
+        raise ValueError("GPTQ parents require a distinct gptq_ symbol and W4/group32 SF")
     for field in ("tm", "tn", "tk", "wm", "wn", "stages", "ap", "dn", "persistent"):
         if type(parent.get(field)) is not int:
             raise ValueError("parent fields must be integers")
@@ -151,6 +158,8 @@ def materialize_parent(parent):
     unsuffixed parents or silently override an explicitly supplied axis.
     """
     parent = dict(parent)
+    if parent.get("symbol","").startswith("gptq_"):
+        parent.setdefault("weight_style", "gptq")
     match = re.search(r"_rc(\d+)$", parent.get("symbol", ""))
     if match:
         parent.setdefault("dense_reducer", int(match[1]))
@@ -227,6 +236,8 @@ class Compiler:
         }
         if parent.get("dense_reducer"):
             fields["DENSE_REDUCER"] = parent["dense_reducer"]
+        if parent.get("weight_style")=="gptq":
+            fields["SF_GPTQ"] = 1
         return (
             "".join(f"#define QK_{k} {v}\n" for k, v in fields.items())
             + f'#define QK_PARENT "{parent["symbol"]}"\n#define QK_BUILD_KEY "{key}"\n'

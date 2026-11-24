@@ -80,6 +80,10 @@ class MeasuredCandidates:
         ):
             return False
         if (
+            c.get("weight_style","gguf") != request.weight_style
+        ):
+            return False
+        if (
             not request.grouped
             and c["tm"] == 8
             and request.m > (64 if request.route == "fq-dense" else 7)

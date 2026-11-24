@@ -16,7 +16,8 @@ using Compute=std::conditional_t<QKD_USE_BF16_COMPUTE,cutlass::bfloat16_t,cutlas
 using Core=runtime::DenseTypes<QK_QTYPE,QK_TM,QK_TN,QK_TK,QK_WM,QK_WN,QK_STAGES,QK_AP,QK_DN,Compute>;
 using F=runtime::Format<QK_QTYPE>;
 constexpr bool packed=QK_ROUTE==QK_DENSE_FQ;
-constexpr uint64_t mapping=QK_QTYPE==8?q8_kpack2::kMappingId:QK_QTYPE==12?
+static_assert(!QK_SF_GPTQ || (QK_QTYPE==12 && !packed && PPU_PACKED_SCALE==0));
+constexpr uint64_t mapping=QK_SF_GPTQ?QK_MAPPING_GPTQ_W4_G32:QK_QTYPE==8?q8_kpack2::kMappingId:QK_QTYPE==12?
     UINT64_C(0x51344b5034540001):UINT64_C(0x514b504b54000001);
 static_assert(QK_ROUTE==QK_DENSE_FQ || QK_ROUTE==QK_DENSE_SF);
 
