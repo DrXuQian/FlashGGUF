@@ -22,6 +22,13 @@ template<int Q> struct alignas(128) Stage {
 };
 template<int Q> union Storage { Stage<Q> pipe[2]; typename Reduce::SharedStorage peers; };
 
+template<class Layout> constexpr bool adjacent_k_pairs() {
+    for(int lane=0;lane<32;++lane)
+        for(int v=0;v<8;v+=2)
+            if(Layout{}(lane,v+1)!=Layout{}(lane,v)+16) return false;
+    return true;
+}
+
 template<int Words>
 CUTLASS_DEVICE void copy_stripe(uint16_t* dst,uint16_t const* src,int stride) {
     static_assert(Words%tn==0 && tn%8==0);
@@ -78,11 +85,17 @@ __global__ __launch_bounds__(threads) void kernel(qk_call_v1 c) {
     using Atom=std::conditional_t<std::is_same_v<T,cutlass::half_t>,
         cute::PPU0010_16x16x16_F32F16F16F32_TN,cute::PPU0010_16x16x16_F32BF16BF16F32_TN>;
     using Traits=cute::MMA_Traits<Atom>;
+    static_assert(adjacent_k_pairs<typename Traits::BLayout>(), "a packed pair must be (n,k), (n,k+1)");
     float acc[8]{};
     stage(mem.pipe[0],c,tile,col,0);load::cp_async_commit();
     for(int it=0;it<c.k/tk;++it) {
-        if(it+1<c.k/tk) stage(mem.pipe[(it+1)%2],c,tile,col,(it+1)*tk);
-        load::cp_async_commit();load::cp_async_wait<1>();__syncthreads();
+        if(it+1<c.k/tk) {
+            stage(mem.pipe[(it+1)%2],c,tile,col,(it+1)*tk);
+            load::cp_async_commit();load::cp_async_wait<1>();
+        } else {
+            load::cp_async_wait<0>(); // drain the last populated stage, including one-block K
+        }
+        __syncthreads();
         auto const& s=mem.pipe[it%2];
         #pragma unroll
         for(int atom=0;atom<peer_k/16;++atom) {
