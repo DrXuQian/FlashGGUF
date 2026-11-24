@@ -1,0 +1,1 @@
+{"id":"q4k-sf-warpk","parent":"FlashQuant NativeInt4WarpKCollectivePPU + KPackWarpKKernelPPU","change":"group32 floating offset after rounded scale; dynamic M","decision":"explicit candidate only"}

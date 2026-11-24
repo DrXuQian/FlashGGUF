@@ -54,6 +54,7 @@ def test_jit_snapshot_has_the_same_source_identity_without_checkout(tmp_path, ar
     command = [sys.executable, '-c',
         'from pathlib import Path; import sys; '
         'from quactlize.runtime.compiler import Compiler, source_contract; '
+        'from quactlize.runtime.sf_gptq import parent, pack; '
         'print(source_contract(Compiler(Path(sys.argv[1]),Path(sys.argv[2])).identity)); '
         'assert "torch" not in sys.modules', str(sdk), str(tmp_path / 'snapshot-cache')]
     actual = subprocess.check_output(command, cwd=snapshot, env=env, text=True).strip()

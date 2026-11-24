@@ -4,7 +4,7 @@ import json
 import math
 from pathlib import Path
 
-from .compiler import validate_parent
+from .compiler import materialize_parent
 from .tuning import ROUTES, Tactic, digest
 
 PARENT_FIELDS = (
@@ -21,6 +21,11 @@ PARENT_FIELDS = (
     "dn",
     "persistent",
 )
+
+
+def parent_fields(config):
+    return ({k: config[k] for k in PARENT_FIELDS} |
+            {k: config[k] for k in ("weight_style", "dense_reducer") if k in config})
 
 
 def from_config(config):
@@ -42,11 +47,9 @@ class MeasuredCandidates:
             raise ValueError("seed policy schema/digest differs")
         self.data = data
         self.parents = {
-            c["symbol"]: {k: c[k] for k in PARENT_FIELDS}
+            c["symbol"]: materialize_parent(parent_fields(c))
             for c in data["configurations"].values()
         }
-        for p in self.parents.values():
-            validate_parent(p)
 
     def exact_entry(self, request):
         """Historical measurement identity, not a loaded-module admission."""
@@ -61,6 +64,9 @@ class MeasuredCandidates:
                 continue
             if key[5] != request.m:
                 continue
+            parent = self.parents[self.data["configurations"][entry["config_id"]]["symbol"]]
+            if parent.get("weight_style", "gguf") != request.weight_style:
+                continue
             if request.grouped:
                 if tuple(self.data["row_vectors"][entry["row_vector"]]) != request.rows:
                     continue
@@ -74,13 +80,10 @@ class MeasuredCandidates:
         if (
             c["route"] != request.route
             or c["qtype"] != request.qtype
+            or c.get("weight_style", "gptq" if c["symbol"].startswith("gptq_") else "gguf") != request.weight_style
             or request.k % c["tk"]
             or request.k // (c["tk"] * c["split"]) < c["stages"] - 1
             or (c["ap"] and request.m != 1)
-        ):
-            return False
-        if (
-            c.get("weight_style","gguf") != request.weight_style
         ):
             return False
         if (

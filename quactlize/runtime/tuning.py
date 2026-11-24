@@ -31,6 +31,14 @@ def digest(value):
     ).hexdigest()
 
 
+def request_key(fields):
+    """Receipts predating weight_style are GGUF; never alias them to GPTQ."""
+    fields = dict(fields)
+    if fields.get("weight_style") == "gguf":
+        fields.pop("weight_style")
+    return digest(fields)
+
+
 def band(value):
     return 0 if value == 0 else 1 << (value.bit_length() - 1)
 
@@ -83,10 +91,7 @@ class Request:
 
     @property
     def exact_key(self):
-        fields=asdict(self)
-        if self.weight_style=="gguf":
-            fields.pop("weight_style")  # existing receipts retain their keys
-        return digest(fields)
+        return request_key(asdict(self))
 
     @property
     def bucket(self):

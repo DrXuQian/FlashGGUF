@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 HOST = (
-    "test_ci_entry.py",
+    "test_ci_entry.py", "test_sf_gptq.py",
     "test_product_tree.py",
     "test_reference_gguf_kpack.py", "test_reference_gguf_kpack_file.py",
     "test_pack_gguf_cli.py", "test_kpack_device_pack.py", "test_q8_kpack2.py", "test_q5_1_kpack.py",

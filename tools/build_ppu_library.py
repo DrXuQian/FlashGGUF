@@ -34,7 +34,7 @@ JIT_PYTHON = (
     'quactlize/__init__.py', 'quactlize/runtime/__init__.py',
     'quactlize/_version.py', 'quactlize/_library.py',
     'quactlize/runtime/compiler.py', 'quactlize/runtime/tuning.py', 'quactlize/runtime/target.py',
-    'quactlize/runtime/jit_cache.py',
+    'quactlize/runtime/jit_cache.py', 'quactlize/runtime/sf_gptq.py',
     'quactlize/runtime/dispatch.py', 'quactlize/runtime/candidates.py',
     'quactlize/decode/compiler.py', 'quactlize/decode/grouped_compiler.py',
     'tools/kpack_jit.py', 'tools/gguf_header.py', 'quactlize/gguf_roles.py',
@@ -348,6 +348,10 @@ def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
         target=output/'include/quactlize/runtime/abi.h'
         target.parent.mkdir(parents=True,exist_ok=True)
         shutil.copy2(ROOT/'quactlize/runtime/abi.h',target)
+        notices=runtime/'licenses/flashquant'
+        notices.mkdir(parents=True)
+        for name in ('LICENSE','NOTICE'):
+            shutil.copy2(ROOT/'third_party/flashquant'/name,notices/name)
     compiler.check_inputs()
     if any(sha(p) != digest for p, digest in public_sources.items()):
         raise ValueError('provider/dispatcher sources changed during build')

@@ -1,9 +1,7 @@
 """Prepare one selected tactic. No online profiling, shortlist or hidden JIT."""
 
-from dataclasses import asdict
-
-from .candidates import PARENT_FIELDS, from_config
-from .tuning import UnsupportedTactic, digest
+from .candidates import parent_fields, from_config
+from .tuning import UnsupportedTactic, request_key
 
 
 def prepare_selected(backend, request, selection, *, allow_prediction=False):
@@ -18,18 +16,20 @@ def prepare_selected(backend, request, selection, *, allow_prediction=False):
     allowed = {"MEASURED_RECENT", "MEASURED_HISTORICAL"}
     if allow_prediction:
         allowed.add("HEURISTIC_UNVALIDATED")
-    if status not in allowed or digest(selection.get("request")) != digest(
-        asdict(request)
-    ):
+    saved = selection.get("request")
+    if status not in allowed or not isinstance(saved, dict) or request_key(saved) != request.exact_key:
         raise UnsupportedTactic("selection is not admitted for this exact request")
     config = selection["config"]
     tactic = from_config(config)
     module = backend.modules.get(tactic.parent)
     if module is None:
         raise UnsupportedTactic("load/compile the selected parent before preparation")
-    parent = {k: config[k] for k in PARENT_FIELDS}
+    parent = parent_fields(config)
+    if parent["symbol"].startswith("gptq_"):
+        parent.setdefault("weight_style", "gptq")
     if (
-        module.record["parent"] != parent
+        parent.get("weight_style", "gguf") != request.weight_style
+        or module.record["parent"] != parent
         or module.record["identity"] != selection["module_contract"]
     ):
         raise UnsupportedTactic("selected module parent/compiler contract differs")
