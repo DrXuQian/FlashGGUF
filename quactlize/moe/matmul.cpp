@@ -1,4 +1,5 @@
 #include "matmul_internal.hpp"
+#include "../dense/warpk.hpp"
 #include "selection.hpp"
 #include "../dispatch/selection.hpp"
 #include "../runtime/library.hpp"
@@ -15,6 +16,12 @@ using library::require;
 using library::dispatch_check;
 using dense::reserve;
 thread_local std::string error;
+Plan::~Plan() {
+#ifdef QUACTLIZE_WITH_WARPK
+    if(warpk) {quactlize_ppu_warpk_destroy_v2(handle);return;}
+#endif
+    if(handle) quactlize_kpack_dispatch_destroy_v1(handle);
+}
 void device_check(int device) {
     int current=-1;
     require(hggcGetDevice(&current)==hggcSuccess && current==device,"MoE context/current device mismatch");
@@ -117,8 +124,22 @@ void select(Plan& p) {
         p.plane_bytes=uint64_t(a.n)*a.k*a.experts/a.arrangement.group_size*2;
 }
 void prepare(Plan& p) {
-    select(p);p.info.compute_type=QK_COMPUTE_BF16;
     uint64_t cursor=0;auto const& a=p.params;uint64_t rows=uint64_t(a.tokens)*a.topk;
+#ifdef QUACTLIZE_WITH_WARPK
+    if(p.warpk) {
+        p.metadata=a.qtype==8?QK_METADATA_F16:QK_METADATA_BF16;
+        p.tc.compute_units=dense::warpk::device_units(p.owner->device);
+        auto d=dense::warpk::shape(p.owner->device,p.tc.compute_units,QK_COMPUTE_BF16,p.metadata,
+            a.arrangement.group_size,a.arrangement.mapping_id,int(rows),a.n,a.k,a.experts,a.tokens);
+        require(quactlize_ppu_warpk_prepare_v2(a.qtype,&d,&p.handle)==QK_OK,
+                "cannot prepare grouped BF16 SF warp-K for this format/shape/device");
+        p.info.route=QUACTLIZE_MOE_SF_TC;p.info.policy=QKS_PREDICTED;p.info.split=1;
+        std::snprintf(p.info.config,sizeof(p.info.config),"sf:q%d:grouped:warpk:tm16:tn64:tk256:wk64",a.qtype);
+        if(a.qtype!=8) p.plane_bytes=uint64_t(a.experts)*a.n*(a.k/a.arrangement.group_size)*2;
+    } else
+#endif
+    select(p);
+    p.info.compute_type=QK_COMPUTE_BF16;
     if(p.kind==QKS_SMALLM_TC) {
         auto c=prepare_call(p);
         require(quactlize_ppu_moe_prepare_select_v2(&c,&p.preparation)==QZR_OK,"MoE prepare selection failed");
@@ -129,7 +150,8 @@ void prepare(Plan& p) {
         p.route=reserve(cursor,p.preparation.helper.workspace_bytes);
         p.input=reserve(cursor,rows*a.k*2);p.output=reserve(cursor,rows*a.n*2);p.status=reserve(cursor,4);
         if(p.plane_bytes) {p.scale=reserve(cursor,p.plane_bytes);p.zero=reserve(cursor,p.plane_bytes);}
-        dispatch_check(quactlize_kpack_dispatch_prepare_grouped_dynamic_v1(p.owner->dispatcher,&p.tc,&p.handle));
+        if(!p.warpk)
+            dispatch_check(quactlize_kpack_dispatch_prepare_grouped_dynamic_v1(p.owner->dispatcher,&p.tc,&p.handle));
     }
     p.kernel=reserve(cursor,p.kernel_bytes);p.info.workspace_bytes=cursor;
 }
@@ -166,6 +188,14 @@ qk_compute_device_call_v4 grouped(Plan const& p,void const* input,int32_t const*
     k.output=base+p.output;k.offsets_device=offsets;k.workspace=base+p.kernel;
     k.workspace_bytes=p.kernel_bytes;k.stream=stream;
     qk_compute_device_call_v4 d{4,sizeof(d),{2,sizeof(qk_device_call_v2),k,a.tokens,0},QK_COMPUTE_BF16,p.metadata};
+#ifdef QUACTLIZE_WITH_WARPK
+    if(p.warpk) {
+        require(mode==QK_GROUPED_COMPLETE,"warp-K has no global partials");
+        d.device_call.call.workspace=nullptr;
+        require(quactlize_ppu_warpk_run_v2(p.handle,&d)==QK_OK,"grouped SF warp-K launch failed");
+        return d;
+    }
+#endif
     dispatch_check(quactlize_kpack_dispatch_run_grouped_dynamic_v1(p.handle,&d,mode));
     return d;
 }
@@ -205,8 +235,8 @@ extern "C" int quactlize_ppu_moe_matmul_create_v1(int32_t device,void** out) {
         dispatch_check(quactlize_kpack_dispatch_open_v1(c->root.c_str(),&c->dispatcher));*out=c.release();
     });
 }
-extern "C" int quactlize_ppu_moe_matmul_prepare_v1(void* context,quactlize_ppu_moe_matmul_params_v1 const* a,
-    void const* low,void const* high,void const* units,void** out,quactlize_ppu_moe_matmul_plan_info_v1* info) {
+static int prepare_projection(void* context,quactlize_ppu_moe_matmul_params_v1 const* a,
+    void const* low,void const* high,void const* units,void** out,quactlize_ppu_moe_matmul_plan_info_v1* info,bool warpk) {
     using namespace quactlize::moe::matmul;if(out) *out=nullptr;
     return boundary([&] {
         require(context && out && info && info->version==1 && info->size==sizeof(*info) &&
@@ -215,11 +245,22 @@ extern "C" int quactlize_ppu_moe_matmul_prepare_v1(void* context,quactlize_ppu_m
             (a->sizes.high_bytes?(high && !(uintptr_t(high)%16)):!high),"invalid MoE weight planes");
         auto& c=*static_cast<Context*>(context);device_check(c.device);outside_capture();
         auto p=std::make_unique<quactlize::moe::matmul::Plan>();p->owner=&c;p->params=*a;
+        p->warpk=warpk;
         p->low=static_cast<uint8_t const*>(low);p->high=static_cast<uint8_t const*>(high);p->units=static_cast<uint8_t const*>(units);
         std::lock_guard<std::mutex> lock(c.mutex);prepare(*p);
         auto ptr=p.get();c.plans.push_back(std::move(p));*info=ptr->info;*out=ptr;
     });
 }
+extern "C" int quactlize_ppu_moe_matmul_prepare_v1(void* ctx,quactlize_ppu_moe_matmul_params_v1 const* a,
+    void const* low,void const* high,void const* units,void** out,quactlize_ppu_moe_matmul_plan_info_v1* info) {
+    return prepare_projection(ctx,a,low,high,units,out,info,false);
+}
+#ifdef QUACTLIZE_WITH_WARPK
+extern "C" int quactlize_ppu_moe_matmul_prepare_warpk_v1(void* ctx,quactlize_ppu_moe_matmul_params_v1 const* a,
+    void const* low,void const* high,void const* units,void** out,quactlize_ppu_moe_matmul_plan_info_v1* info) {
+    return prepare_projection(ctx,a,low,high,units,out,info,true);
+}
+#endif
 extern "C" int quactlize_ppu_moe_matmul_run_v1(void* plan,float const* input,int32_t const* ids,float* output,
     void* workspace,uint64_t bytes,void* stream) {
     using namespace quactlize::moe::matmul;

@@ -44,6 +44,12 @@ int quactlize_ppu_moe_matmul_create_v1(int32_t device,void** context);
 int quactlize_ppu_moe_matmul_prepare_v1(void* context,quactlize_ppu_moe_matmul_params_v1 const*,
     void const* low,void const* high,void const* units,void** plan,
     quactlize_ppu_moe_matmul_plan_info_v1*);
+// Explicit whole-K / four K-peer SF candidate. Same packed input, routing,
+// BF16 endpoints, scratch lifetime and run_v1 as the ordinary projection.
+// Optional export of a PPU1.0 --with-warpk package. Not an automatic route.
+int quactlize_ppu_moe_matmul_prepare_warpk_v1(void* context,quactlize_ppu_moe_matmul_params_v1 const*,
+    void const* low,void const* high,void const* units,void** plan,
+    quactlize_ppu_moe_matmul_plan_info_v1*);
 
 // Complete selected projection, including GPU routing/gather, SF expansion,
 // actual Split-K reducer and output scatter. Direct indexed SIMT needs none

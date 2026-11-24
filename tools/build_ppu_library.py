@@ -113,6 +113,9 @@ def verify(output):
         raise ValueError('public exports missing: ' + repr(sorted(set(PUBLIC_EXPORTS) - exports)))
     if 'warpk' in manifest:
         names={'quactlize_ppu_warpk_'+x+'_v1' for x in ('prepare','run','destroy')}
+        if manifest['warpk'].get('multiformat'):
+            names |= {'quactlize_ppu_warpk_'+x+'_v2' for x in ('prepare','run','destroy')}
+            names.add('quactlize_ppu_moe_matmul_prepare_warpk_v1')
         if (arch!='ppu_10' or not names<=exports or
                 'include/quactlize/runtime/abi.h' not in manifest['payloads']):
             raise ValueError('incomplete PPU1.0 warp-K payload')
@@ -309,7 +312,8 @@ def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
         obj = work / (name + '.o')
         command = ([str(sdk / 'bin/hgcc'), *flags] if source.endswith('.cu') else
                    ['g++', '-std=c++17', '-O2', '-fPIC', '-pthread', *host_defines])
-        if warpk and source in ('quactlize/dense/runtime.cpp','quactlize/dense/warpk.cu'):
+        if warpk and source in ('quactlize/dense/runtime.cpp','quactlize/moe/matmul.cpp',
+                                'quactlize/dense/warpk.cu','quactlize/dense/warpk_sf.cu'):
             command.append('-DQUACTLIZE_WITH_WARPK=1')
             if source.endswith('.cu'):
                 # Keep the donor's *whole* header closure ahead of similarly
@@ -324,7 +328,7 @@ def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
             'quactlize/moe/matmul.cpp','quactlize/moe/selection.cpp',
             'quactlize/moe/scaffold.cu','quactlize/routing/route.cu','quactlize/ffn/ffn.cpp',
             'quactlize/ffn/dense_swiglu.cu', *compatibility_sources(arch),
-            *(('quactlize/dense/warpk.cu',) if warpk else ()))))
+            *(('quactlize/dense/warpk.cu','quactlize/dense/warpk_sf.cu') if warpk else ()))))
     objects += [work / 'packing' / (name + '.o') for name in ('sizes.cpp', 'ppu_pack.cu')]
     run('public', ['g++', '-shared', '-pthread', '-Wl,-Bsymbolic', '-Wl,-z,defs',
         '-Wl,-soname,' + PUBLIC_LIBRARY, '-Wl,-rpath,$ORIGIN/quactlize-runtime',
@@ -390,6 +394,7 @@ def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
         performance_admission='NOT_MEASURED', seconds=time.monotonic() - start)
     if warpk:
         manifest['warpk']=dict(flashquant=warpk[1],explicit_only=True,
+                               multiformat=True,qtypes=[8,10,11,12,13,14],modes=['dense','grouped'],
                                styles=['gguf-sf','gptq-w4-g32'],performance_admitted=False)
     if source_files(ROOT) != provenance['source_hashes']:
         raise ValueError('package sources changed during public library build')

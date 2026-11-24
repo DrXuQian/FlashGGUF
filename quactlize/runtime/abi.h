@@ -88,6 +88,19 @@ typedef struct {
   qk_device_call_v2 device_call;
   int32_t compute_type, metadata_type;
 } qk_compute_device_call_v4;
+
+// Optional --with-warpk; contiguous native 16-bit A/C, FP32 MMA and
+// intra-CTA reduction. qtype=8,10..14; qtype is REQUIRED because Q2/3/5/6
+// share one mapping ID. Use their canonical LOW/HIGH, expanded SF scale/zero
+// in compute_type; Q8 uses its original FP16 d and zero=NULL. GPTQ W4/g32
+// uses its own mapping and unscaled 8-zp plane. max_rows=0: dense, E=1.
+// max_rows>0: grouped A/C in expert order; device offsets[E+1] from 0 to m;
+// each expert has 0..max_rows rows. Prepare outside capture, address-free.
+// Run rebinds every pointer/stream, without scratch, JIT, host ID reads or
+// allocation. E and geometry remain fixed; offsets may change on replay.
+int quactlize_ppu_warpk_prepare_v2(int32_t qtype,qk_compute_device_call_v4 const*,void**);
+int quactlize_ppu_warpk_run_v2(void*,qk_compute_device_call_v4 const*);
+void quactlize_ppu_warpk_destroy_v2(void*);
 typedef struct {
   uint32_t version,size;
   qk_identity_v1 const* parent;
