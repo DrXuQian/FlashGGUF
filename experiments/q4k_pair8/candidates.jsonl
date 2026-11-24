@@ -1,0 +1,3 @@
+{"arm":"selected","parent":"a1b14166","cta":[64,64,64],"warp":[64,32],"status":"production_geometry_control","route":"sf-dense"}
+{"arm":"wide","parent":"selected","cta":[64,256,64],"warp":[64,16],"change":"16 disjoint N warp tiles, no handshake"}
+{"arm":"pair8","parent":"wide","change":"within-stage per-pair wait before upper warp prepare; lower warp release after prepare; 8 independent pairs","status":"device_pending"}

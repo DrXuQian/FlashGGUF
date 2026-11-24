@@ -1,0 +1,4 @@
+arm,M,N,K,status,latency_us
+selected,512,25600,5120,NOT_RUN,
+wide,512,25600,5120,NOT_RUN,
+pair8,512,25600,5120,NOT_RUN,

@@ -48,6 +48,9 @@
 #include "cute/numeric/arithmetic_tuple.hpp"
 
 #include "cutlass/gemm/collective/collective_mma.hpp"
+#if defined(QZ_EXPERIMENT_SF_PAIR8)
+#include "cutlass/arch/barrier.h"
+#endif
 #include "actlize_extensions/cutlass/gemm/collective/detail/ppu_mixed_metadata_policy.hpp"
 #include "actlize_extensions/cutlass/gemm/collective/detail/ppu_mixed_argument_contract.hpp"
 #include "actlize_extensions/cutlass/gemm/collective/detail/ppu_packed_metadata_ownership.hpp"
@@ -1243,7 +1246,26 @@ public:
       packed_decode_stage<kPackedScaleOn>(
           storage, stage, packed_tile_in_unit[stage], thread_idx, scale_residue_n);
     };
+#if defined(QZ_EXPERIMENT_SF_PAIR8)
+    // Private experiment TU only. No assumptions about which WE schedules a warp.
+    constexpr bool pair8 = kQ4KPack4Transpose && !kPackedScaleOn && !kPackedA &&
+        std::is_same_v<ArchTag, cutlass::arch::PPU0010> &&
+        std::is_same_v<ElementA, cutlass::half_t> && std::is_same_v<ElementAccumulator, float> &&
+        int(size<0>(TileShape{})) == 64 && int(size<1>(TileShape{})) == 256 &&
+        int(size<2>(TileShape{})) == 64 && int(DispatchPolicy::Stages) == 3 &&
+        int(warpOnM{}) == 1 && int(warpOnN{}) == 16 && kKPackScheduledDeliveryN == 64;
+    using PairBar = cutlass::arch::NamedBarrier;
+    static_assert(!pair8 || (decltype(K_BLOCK_MAX)::value == 1 &&
+                            PairBar::ReservedNamedBarrierCount + 7 < PairBar::HardwareMaxNumNamedBarriers));
+#endif
     auto prepare = [&] (auto k_block, int read_stage, auto prime) {
+#if defined(QZ_EXPERIMENT_SF_PAIR8)
+      // One generation/pair/K64 stage; the existing all-thread publication
+      // separates generations. Do not independently branch around a CTA barrier.
+      if constexpr (pair8) {
+        if (warp_idx >= 8) PairBar::arrive_and_wait(64, uint32_t(warp_idx & 7));
+      }
+#endif
       copy_B_and_extra_info(smem_tiled_copy_B, tCsB, tCrB_copy_view,
           partitioned_extra_info, copy_partitions_extra_info, k_block, read_stage);
       // NO M-PINNING LOOP HERE, and that is a measured decision. CPY_M = size<1>(tCsA) is 1 both with and without
@@ -1254,6 +1276,11 @@ public:
           smem_tiled_copy_A, tCsA_p, tCrA_copy_view, k_block, prime);
       transform_B_kblock<RealInternalElementB>(tCrB_copy_view, tCrB_mma, partitioned_extra_info, k_block,
           K_ATOM_PER_COPY, copy_partitions_extra_info, read_stage);
+#if defined(QZ_EXPERIMENT_SF_PAIR8)
+      if constexpr (pair8) {
+        if (warp_idx < 8) PairBar::arrive(64, uint32_t(warp_idx & 7));
+      }
+#endif
     };
     auto prefetch = [&] (auto k_tile, int write_stage) {
           auto k_iter_crd = cute::idx2crd(k_tile, k_iter_shape);
