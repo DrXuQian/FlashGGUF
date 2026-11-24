@@ -65,6 +65,14 @@ the automatic route, then one of warp-K. MoE screen uses E=8/topk=2 to bound
 ring memory: it is not a model-sized router benchmark, a throughput claim,
 or sufficient by itself to promote a default.
 
+Local evidence for kernel revision `f7238eac`: SDK 2.1.1 (ppu_10) built
+and verified the public package; libncp_quactlize.so SHA-256
+`c54b3cc1697c601b4c7dc99750b54598848aa0fe4e4bc79ba3c11cfb152f3c15`.
+All 14 new native bodies contain the expected MMA and AIU/SWZL A delivery;
+the SDK reports 138–238 VREG and zero stack bytes, not measured occupancy.
+246 related host tests passed; the 34 device tests were collected only.
+No PPU numeric, latency or table-promotion result is recorded yet.
+
 ## Earlier Q4/FlashQuant parity suite
 
 To additionally run the earlier Q4 tests and the independent donor comparison:
