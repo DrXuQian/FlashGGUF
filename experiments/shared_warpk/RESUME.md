@@ -1,14 +1,73 @@
 # Shared warp-K: what to build and what the result means
 
 The ordinary FlashGGUF build, llama wiring and automatic winner tables are
-unchanged. To build the opt-in dense FP16 warp-K in the **same public DSO**:
+unchanged. To build the opt-in **dense and grouped SF** warp-K in the same public DSO:
 
 ```bash
 git submodule update --init third_party/actlize third_party/flashquant
 bash build.sh --library --with-warpk --arch ppu_10 --output /path/to/fresh/package
 ```
 
-On one idle PPU1.0 (ZW810 or ZW810E), run from this branch:
+## New: all canonical SF formats
+
+On one free PPU1.0 (ZW810 / ZW810E) in this checkout, with the SDK already installed:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash experiments/shared_warpk/box.sh --formats
+```
+
+This builds locally, checks the native instructions of every new specialization
+when build intermediates are available, then runs the public package. No
+separate FlashQuant reference DSO or Python C extension is required for this mode.
+It prints `WARPK_OUTPUT`, then `WARPK_FORMATS_PASS` only if correctness passed.
+`formats.xml` is the test result; `isa.json` is compiler evidence, not a GPU result.
+The last line gives a small `review.tgz` with the XML and JSON only.
+
+| Projection | Candidate API | Compute | GGUF weight formats |
+|---|---|---|---|
+| Dense F32 A/C | dense_prepare_candidate_v1, kind 4, route 1, split 1 | F16 or BF16 | Q2_K through Q6_K, Q8_0 |
+| MoE F32 A/C (broadcast or per-slot) | moe_matmul_prepare_warpk_v1, ordinary run_v1 | BF16 | same six |
+| Already prepared native-16 A/C, dense or sorted expert rows | warpk_prepare/run_v2 | F16 or BF16 | same six, plus symmetric/asymmetric GPTQ W4/group32 |
+
+One CTA owns its output tile across **all** K. In the new kernel 16 warps are
+four N cohorts times four K peers: tile M16/N64/K256, each peer handles K64,
+then the peers reduce in FP32 inside the CTA. A uses the FlashQuant AIU/SWZL
+load pair; B uses canonical vectorized LOW/(HIGH)/metadata stripes, with each
+format's own register decoder and MMA operand map. No full weight expansion
+or cross-CTA reducer. Dense FP16 Q4/GPTQ retains the previous M8 donor.
+Public calls include their existing SF metadata expansion (Q8 uses FP16 scale
+directly), input adapters and, for MoE, device routing/gather/scatter. The
+low-level prepared call needs no global workspace; a complete public call does.
+Run with new addresses/stream outside capture, or with unchanged pointers and
+changed offsets/activations in replay. Sorted offsets must describe valid rows.
+The public MoE API expects valid, distinct IDs **within** each token.
+
+The test uses independent GGUF decoding, varying group scales/minima, K
+peers and stage boundaries. Covers M=1..8,9,16,17,128, both input addressing
+modes, strided outputs, empty/hot/dispersed experts, changed-ID replay,
+N/K=1024/2048 and 2048/512, and both GPTQ zero modes. Does not cover Q5_1,
+Q2_0, MXFP4, noncanonical tails, other GPTQ widths, or PPU1.5.
+
+For an optional **bounded** same-card Asys A/B, append `WARPK_BENCH=1` to
+the environment before `bash`. Defaults: M=1, six formats × dense, MoE-gate,
+MoE-down. Example limited to one case, reusing the package from the first run:
+
+```bash
+QUACTLIZE_CI_PACKAGE=/path/from/WARPK_OUTPUT/package CUDA_VISIBLE_DEVICES=0 \
+  WARPK_BENCH=1 TRACE_Q=14 TRACE_OP=moe-down TRACE_M=8 bash experiments/shared_warpk/box.sh --formats
+```
+
+Each JSON records source/package revisions, DSO hash, format/shape, physical
+device, incumbent config and six alternating whole-call event samples per arm.
+Same-address and disjoint rotating weights are separate (intervening active LOW
+bytes ≥2.25× queried L2). Each Asys report contains a warmed full rotation of
+the automatic route, then one of warp-K. MoE screen uses E=8/topk=2 to bound
+ring memory: it is not a model-sized router benchmark, a throughput claim,
+or sufficient by itself to promote a default.
+
+## Earlier Q4/FlashQuant parity suite
+
+To additionally run the earlier Q4 tests and the independent donor comparison:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 WARPK_BENCH=1 bash experiments/shared_warpk/box.sh
@@ -62,7 +121,7 @@ The upstream caller must resolve any checkpoint qzeros offset or g_idx
 permutation; this is not an AutoGPTQ checkpoint loader. Old measured GGUF
 records and identically shaped GPTQ requests are never interchangeable.
 
-The embedded warp-K shape is TM8/TN64/TK256, WN16/WK64, 2 stages, 4 K peers
+The original dense FP16 Q4 embedded warp-K shape is TM8/TN64/TK256, WN16/WK64, 2 stages, 4 K peers
 per output warp cohort; reduction stays within the CTA. For canonical GGUF
 use explicit dense candidate kind 4 (SF, native F16, split 1, dequant_config
 -1). For already prepared FP16 planes call `quactlize_ppu_warpk_prepare_v1`

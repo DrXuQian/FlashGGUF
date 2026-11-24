@@ -29,7 +29,7 @@ def digest(values):
     return hashlib.sha256(np.ascontiguousarray(values).tobytes()).hexdigest()
 
 
-def raw_weight(q, n, k, seed):
+def raw_weight(q, n, k, seed, *, varied_groups=False):
     """Nonzero, sign-varying codes and dyadic scales: exact in both 16-bit types.
 
     Official GGUF dequantization is the golden. Dyadic group scales make the
@@ -50,7 +50,12 @@ def raw_weight(q, n, k, seed):
         spec = ref.SPECS[q]
         template = bytearray(width)
         for g in range(spec.groups):
-            ref._metadata_put(template, 0, spec, g, 33 if q == 11 else 1, 1)
+            scale, minimum = (33 if q == 11 else 1), 1
+            if varied_groups:
+                signed = (g + seed) % 7 - 3
+                scale = 32 + signed if q == 11 else signed if q == 14 else 1 + (g + seed) % 3
+                minimum = (3*g + seed) % 5
+            ref._metadata_put(template, 0, spec, g, scale, minimum)
         metadata_size = 16 if q in (10, 14) else 12
         raw[..., spec.scale_offset:spec.scale_offset + metadata_size] = np.frombuffer(
             template, dtype="u1")[spec.scale_offset:spec.scale_offset + metadata_size]

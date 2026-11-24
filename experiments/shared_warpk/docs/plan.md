@@ -26,3 +26,20 @@ correctness and a bounded same-card paired whole-call A/B, hot and rotating cold
 weights (>2.25x L2), baseline is the unchanged automatic FlashGGUF winner.
 Stop on a numerical failure; do not claim a performance win from compile checks.
 No time deadline specified; hand off when physical PPU execution is required.
+
+## Multi-format / grouped continuation (base 8fc468d1)
+
+Priority: canonical Q2_K, Q3_K, Q4_K, Q5_K, Q6_K, Q8_0, for both dense
+projection and grouped expert projection on PPU1.0. Prepared W4/group32
+GPTQ must work in grouped as well as dense, with subtraction before scale.
+Preserve original Q4 dense FP16 donor path, exact GGUF bytes, old ABI and
+automatic routes. One whole output tile per CTA, four distinct K peers,
+FP32 accumulation/reduction inside the CTA; no expanded W16 matrix, global
+partial/reducer, or loop over experts on the host. Dense F16 and grouped
+BF16 are required. Exercise independently decoded raw inputs at M=1..8,
+9,16,17 and prefill, multi-K-tile sizes, high-bit/minimum boundaries,
+empty/skewed experts, changed routing and graph replay. Fixed-width reference
+tiles: N=256,K=512/1024; smoke real N/K=1024/2048 and 2048/512. Time only
+numerically admitted calls against the former production winner on the same
+physical card, including SF preparation and gather/scatter. No time limit
+specified; SDK compilation/ISA, CPU oracle and PPU results reported separately.

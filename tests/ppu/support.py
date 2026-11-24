@@ -109,16 +109,16 @@ class Public:
             raise AssertionError(f"public dense rc={rc}: {self.error().decode(errors='replace')}")
 
 
-def packed(arena, lib, q, n=256, k=512, experts=1, pair=False, bit_patterns=False, seed=0):
+def packed(arena, lib, q, n=256, k=512, experts=1, pair=False, bit_patterns=False, seed=0, *, varied_groups=False):
     """Pack on device, compare every byte, then reuse those planes in GEMM."""
     raw, golden, expected = [], [], {name: [] for name in ("low", "high", "units")}
     gates, ups = [], []
     for expert in range(experts):
-        source, gold = raw_weight(q, n, k, 913 + expert * 17 + q + seed)
+        source, gold = raw_weight(q, n, k, 913 + expert * 17 + q + seed, varied_groups=varied_groups)
         if bit_patterns:
             source = np.random.default_rng(1201 + expert + q).integers(0, 256, source.shape, dtype='u1')
         if pair:
-            up, up_gold = raw_weight(q, n, k, 719 + expert * 13 + q + seed)
+            up, up_gold = raw_weight(q, n, k, 719 + expert * 13 + q + seed, varied_groups=varied_groups)
             if bit_patterns:
                 up = np.random.default_rng(1401 + expert + q).integers(0, 256, up.shape, dtype='u1')
             gates.append(source); ups.append(up)

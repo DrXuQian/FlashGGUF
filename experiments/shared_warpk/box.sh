@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # One idle PPU1.0, already configured SDK. Only the explicit run dir is written.
 set -euo pipefail
+mode=all
+case "$#:${1:-}" in
+    0:) ;;
+    1:--formats) mode=formats ;;
+    *) echo 'Usage: bash experiments/shared_warpk/box.sh [--formats]' >&2; exit 2 ;;
+esac
 root=$(git rev-parse --show-toplevel)
 cd "${root:?}"
 test -f quactlize/dense/warpk.cu
@@ -13,11 +19,44 @@ export PATH="$sdk/bin:$PATH" LD_LIBRARY_PATH="$sdk/lib${LD_LIBRARY_PATH:+:$LD_LI
 run=$(mktemp -d "${TMPDIR:-/tmp}/flashgguf-warpk.XXXXXXXX")
 test -d "${run:?}"
 echo "WARPK_OUTPUT=$run"
+export OPENBLAS_NUM_THREADS="${WARPK_CPU_THREADS:-2}" OMP_NUM_THREADS="${WARPK_CPU_THREADS:-2}"
 "$py" -c 'import torch, gguf, numpy, pytest'
 git submodule update --init third_party/actlize third_party/flashquant
 if [[ -z ${QUACTLIZE_CI_PACKAGE:-} ]]; then
     export QUACTLIZE_CI_PACKAGE="$run/package"
     bash build.sh --library --with-warpk --arch ppu_10 --sdk "$sdk" --output "$QUACTLIZE_CI_PACKAGE" --jobs "${JOBS:-8}"
+fi
+"$py" -c 'import json,os;from pathlib import Path
+w=json.loads((Path(os.environ["QUACTLIZE_CI_PACKAGE"])/"manifest.json").read_text()).get("warpk",{})
+if not w.get("multiformat") or set(w["qtypes"])!={8,10,11,12,13,14}:
+    raise SystemExit("build this branch with --with-warpk; the package is missing the multi-format candidate")'
+obj="${QUACTLIZE_CI_PACKAGE}.build/warpk_sf.o"
+if [[ -f "$obj" ]]; then
+    "$py" experiments/shared_warpk/isa.py "$sdk/bin/hgobjdump" "$obj" >"$run/isa.json"
+fi
+QUACTLIZE_CI_SUITE=accuracy "$py" -m pytest -qx --confcutdir=experiments/shared_warpk \
+    tests/test_warpk_formats.py experiments/shared_warpk/test_formats_device.py --junitxml="$run/formats.xml"
+echo "WARPK_FORMATS_PASS q=8,10,11,12,13,14 modes=dense,grouped output=$run performance_admitted=false"
+if [[ $mode == formats ]]; then
+    if [[ ${WARPK_BENCH:-0} == 1 ]]; then
+        for q in ${TRACE_Q:-8 10 11 12 13 14}; do
+            for op in ${TRACE_OP:-dense moe-gate moe-down}; do
+                for m in ${TRACE_M:-1}; do
+                    prefix="$run/$q-$op-m$m"
+                    "$sdk/asight/bin/asys" profile -t hggc --sample none --python-sampling false \
+                        --capture-range hggcProfilerApi --capture-range-end merge --kill none --wait primary \
+                        -f false -o "$prefix" "$py" experiments/shared_warpk/formats_ab.py \
+                        --q "$q" --mode "$op" --m "$m" --profiler --output "$prefix.json"
+                    test -s "$prefix.asysrep"
+                done
+            done
+        done
+        echo "WARPK_FORMATS_AB_DONE output=$run"
+    fi
+    # XML + compact JSON only. The original Asys reports stay on the box.
+    ( cd "$run"; shopt -s nullglob; tar -czf review.tgz formats.xml *.json )
+    echo "review=$run/review.tgz"
+    exit 0
 fi
 if [[ -z ${FLASHQUANT_REFERENCE:-} ]]; then
     # Independent historical source, not the new shared collective compiled twice.
