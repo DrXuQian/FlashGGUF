@@ -43,3 +43,22 @@ tiles: N=256,K=512/1024; smoke real N/K=1024/2048 and 2048/512. Time only
 numerically admitted calls against the former production winner on the same
 physical card, including SF preparation and gather/scatter. No time limit
 specified; SDK compilation/ISA, CPU oracle and PPU results reported separately.
+
+## Fully quantized warp-K (base 70a97881, PPU1.0)
+
+Keep the SF tensor-core schedule, arithmetic after operand reconstruction, and
+dynamic grouped offsets. Change only how group metadata arrives: consume the
+producer's immutable units in the CTA, without any external SF prepass, full
+dequantization or global scale/zero buffers. Use the production FQ metadata
+decoder and its precision boundaries (including signed Q3/Q6 groups and the
+second superblock in paired records). Q8's original FP16 d is already the
+whole metadata; reuse the existing Q8 body. GPTQ is an SF contract, not FQ.
+Leave SF v1/v2, ordinary dense/MoE prepare, policy tables and llama untouched.
+
+Coverage: all six GGUF formats, dense F16/BF16 and grouped MoE BF16,
+M=1..8/9/16/17/128, single/two/four K stages, multiple experts, changed routes
+on replay, raw unit guards, metadata rounding witnesses vs independent host
+oracle. Build/inspect ppu_10 AOT, check public scratch excludes expanded
+planes. On an idle box compare auto vs SF vs FQ at matching shape/precision
+and full-call scope; count Q8 once, retain controls and unmeasured defaults.
+No deadline or production promotion.

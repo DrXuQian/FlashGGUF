@@ -50,6 +50,11 @@ int quactlize_ppu_moe_matmul_prepare_v1(void* context,quactlize_ppu_moe_matmul_p
 int quactlize_ppu_moe_matmul_prepare_warpk_v1(void* context,quactlize_ppu_moe_matmul_params_v1 const*,
     void const* low,void const* high,void const* units,void** plan,
     quactlize_ppu_moe_matmul_plan_info_v1*);
+// Same grouping and run_v1, but unfold canonical units in the CTA. No SF
+// expansion buffers/kernels. Q8_0 shares its native-d body with SF.
+int quactlize_ppu_moe_matmul_prepare_fq_warpk_v1(void* context,quactlize_ppu_moe_matmul_params_v1 const*,
+    void const* low,void const* high,void const* units,void** plan,
+    quactlize_ppu_moe_matmul_plan_info_v1*);
 
 // Complete selected projection, including GPU routing/gather, SF expansion,
 // actual Split-K reducer and output scatter. Direct indexed SIMT needs none

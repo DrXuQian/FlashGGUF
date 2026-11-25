@@ -116,6 +116,8 @@ def verify(output):
         if manifest['warpk'].get('multiformat'):
             names |= {'quactlize_ppu_warpk_'+x+'_v2' for x in ('prepare','run','destroy')}
             names.add('quactlize_ppu_moe_matmul_prepare_warpk_v1')
+        if 'gguf-fq' in manifest['warpk'].get('styles',[]):
+            names.update(('quactlize_ppu_warpk_prepare_fq_v2','quactlize_ppu_moe_matmul_prepare_fq_warpk_v1'))
         if (arch!='ppu_10' or not names<=exports or
                 'include/quactlize/runtime/abi.h' not in manifest['payloads']):
             raise ValueError('incomplete PPU1.0 warp-K payload')
@@ -395,7 +397,8 @@ def build(sdk, output, jobs, *, arch='ppu_10', with_warpk=False):
     if warpk:
         manifest['warpk']=dict(flashquant=warpk[1],explicit_only=True,
                                multiformat=True,qtypes=[8,10,11,12,13,14],modes=['dense','grouped'],
-                               styles=['gguf-sf','gptq-w4-g32'],performance_admitted=False)
+                               styles=['gguf-sf','gguf-fq','gptq-w4-g32'],q8_fq_shares_sf_body=True,
+                               performance_admitted=False)
     if source_files(ROOT) != provenance['source_hashes']:
         raise ValueError('package sources changed during public library build')
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

@@ -99,6 +99,11 @@ typedef struct {
 // Run rebinds every pointer/stream, without scratch, JIT, host ID reads or
 // allocation. E and geometry remain fixed; offsets may change on replay.
 int quactlize_ppu_warpk_prepare_v2(int32_t qtype,qk_compute_device_call_v4 const*,void**);
+// FQ: same run_v2/destroy_v2 and geometry. metadata is the producer's
+// canonical packed units of sizes.units_bytes, zero MUST be NULL. No
+// external expansion or global kernel scratch. GGUF only; for Q8 this is
+// the same original FP16 d and same kernel as SF.
+int quactlize_ppu_warpk_prepare_fq_v2(int32_t qtype,qk_compute_device_call_v4 const*,void**);
 int quactlize_ppu_warpk_run_v2(void*,qk_compute_device_call_v4 const*);
 void quactlize_ppu_warpk_destroy_v2(void*);
 typedef struct {

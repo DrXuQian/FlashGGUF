@@ -237,7 +237,7 @@ void select(Plan& p) {
 }
 
 void select_candidate(Plan& p,quactlize_ppu_dense_candidate_v1 const& c) {
-    require(c.version==1 && c.size==sizeof(c) && c.kind>=0 && c.kind<=QUACTLIZE_DENSE_CANDIDATE_SF_WARPK &&
+    require(c.version==1 && c.size==sizeof(c) && c.kind>=0 && c.kind<=QUACTLIZE_DENSE_CANDIDATE_FQ_WARPK &&
         (c.native_f16==0 || c.native_f16==1) && (c.legacy_adapters==0 || c.legacy_adapters==1) &&
         c.dequant_config>=-1 && c.dequant_config<=12 && std::memchr(c.parent,0,sizeof(c.parent)),
         "invalid dense candidate ABI");
@@ -246,19 +246,21 @@ void select_candidate(Plan& p,quactlize_ppu_dense_candidate_v1 const& c) {
     bool tile=c.tm || c.tn || c.tk || c.wm || c.wn || c.stages || c.ap || c.delivery_n || c.grid_mode || c.grid_b;
     bool reader=c.variant || c.columns || c.warps || c.values;
     p.request=request_for(p.params);p.request.route=c.route;
-    if (c.kind==QUACTLIZE_DENSE_CANDIDATE_SF_WARPK) {
+    if (c.kind==QUACTLIZE_DENSE_CANDIDATE_SF_WARPK || c.kind==QUACTLIZE_DENSE_CANDIDATE_FQ_WARPK) {
 #ifdef QUACTLIZE_WITH_WARPK
         auto const& a=p.params;
-        require(c.route==QK_DENSE_SF && c.native_f16==(p.compute==QK_COMPUTE_F16) &&
+        bool const fq=c.kind==QUACTLIZE_DENSE_CANDIDATE_FQ_WARPK;
+        require(c.route==(fq?QK_DENSE_FQ:QK_DENSE_SF) && c.native_f16==(p.compute==QK_COMPUTE_F16) &&
             !c.legacy_adapters && c.split==1 && c.dequant_config==-1 && !c.parent[0] && !tile && !reader,
-            "warp-K requires SF, split=1, native operands matching context and no other overrides");
+            "warp-K requires matching FQ/SF route, split=1, native operands matching context and no other overrides");
         p.kind=Kind::WarpK;p.native_f16=c.native_f16;
         p.metadata_type=a.qtype==8 ? int(QK_METADATA_F16) : p.compute;
         p.warp_shape=warpk::shape(p.owner->device,warpk::device_units(p.owner->device),p.compute,
             p.metadata_type,a.arrangement.group_size,a.arrangement.mapping_id,a.m,a.n,a.k,1,0);
-        require(quactlize_ppu_warpk_prepare_v2(a.qtype,&p.warp_shape,&p.handle)==QK_OK,
-                "cannot prepare PPU1.0 dense SF warp-K for this format/shape/device");
-        if(a.qtype!=8) p.plane_bytes=uint64_t(a.n)*(a.k/a.arrangement.group_size)*2;
+        auto prep=fq?quactlize_ppu_warpk_prepare_fq_v2:quactlize_ppu_warpk_prepare_v2;
+        require(prep(a.qtype,&p.warp_shape,&p.handle)==QK_OK,
+                "cannot prepare PPU1.0 dense warp-K for this format/shape/device");
+        if(!fq && a.qtype!=8) p.plane_bytes=uint64_t(a.n)*(a.k/a.arrangement.group_size)*2;
         return;
 #else
         throw std::runtime_error("warp-K not built; use --with-warpk on PPU1.0");
@@ -350,10 +352,11 @@ void prepare(Plan& p,quactlize_ppu_dense_candidate_v1 const* candidate=nullptr) 
     if (p.plane_bytes) {p.scale_offset=reserve(cursor,p.plane_bytes);p.zero_offset=reserve(cursor,p.plane_bytes);}
     p.kernel_offset=reserve(cursor,p.kernel_bytes);info.workspace_bytes=cursor;
     if (p.kind==Kind::WarpK) {
-        info.route=QUACTLIZE_DENSE_SF_TC;info.policy=QKS_PREDICTED;info.split=1;
-        bool donor=p.params.qtype==12 && p.native_f16;
-        std::snprintf(info.config,sizeof(info.config),"sf:q%d:warpk:tm%d:tn%d:tk%d:wn%d:wk%d:s%d",
-            p.params.qtype,donor?warpk::TM:16,warpk::TN,warpk::TK,warpk::WN,warpk::WK,warpk::stages);
+        bool const fq=p.request.route==QK_DENSE_FQ;
+        info.route=fq?QUACTLIZE_DENSE_FQ_TC:QUACTLIZE_DENSE_SF_TC;info.policy=QKS_PREDICTED;info.split=1;
+        bool donor=!fq && p.params.qtype==12 && p.native_f16;
+        std::snprintf(info.config,sizeof(info.config),"%s:q%d:warpk:tm%d:tn%d:tk%d:wn%d:wk%d:s%d",
+            fq?"fq":"sf",p.params.qtype,donor?warpk::TM:16,warpk::TN,warpk::TK,warpk::WN,warpk::WK,warpk::stages);
     } else if (p.kind==Kind::Tc) {
         dispatch_check(quactlize_kpack_dispatch_prepare_dynamic_v1(p.owner->dispatcher,&p.tc,&p.handle));
         info.route=p.request.route==QK_DENSE_FQ?QUACTLIZE_DENSE_FQ_TC:QUACTLIZE_DENSE_SF_TC;
@@ -448,7 +451,7 @@ void run(Plan const& p,float const* a,float* output,void* workspace,uint64_t byt
     if (p.kind==Kind::WarpK) {
         auto d=p.warp_shape;auto& c=d.device_call.call;
         c.a=input;c.low=p.low;c.high=p.high;c.metadata=metadata;c.zero=zero;c.output=result;c.stream=stream;
-        require(quactlize_ppu_warpk_run_v2(p.handle,&d)==QK_OK,"dense SF warp-K launch failed");
+        require(quactlize_ppu_warpk_run_v2(p.handle,&d)==QK_OK,"dense warp-K launch failed");
     } else
 #endif
     if (p.kind==Kind::Simt || p.kind==Kind::Q4) {

@@ -1,5 +1,6 @@
 #pragma once
 #include "warpk_layout.hpp"
+#include "warpk_units.hpp"
 #include "actlize_extensions/cutlass/gemm/kernel/kpack_warpk_ppu.hpp"
 
 // Native PPU1.0 Tensor Core mainloop. Keep the donor's paired AIU/SWZL A
@@ -38,7 +39,7 @@ CUTLASS_DEVICE void copy_stripe(uint16_t* dst,uint16_t const* src,int stride) {
     }
 }
 
-template<int Q>
+template<class T,bool Packed,int Q>
 CUTLASS_DEVICE void stage(Stage<Q>& dst,qk_call_v1 const& c,RowTile tile,int col,int start) {
     using F=Planes<Q>;
     int warp=threadIdx.x/32;
@@ -51,10 +52,20 @@ CUTLASS_DEVICE void stage(Stage<Q>& dst,qk_call_v1 const& c,RowTile tile,int col
     if constexpr(F::high)
         copy_stripe<tk*tn*F::high/16>(dst.high,static_cast<uint16_t const*>(c.high)+
             (kbase/(16/F::high))*c.n+col,c.n);
-    auto meta=kbase/F::group*c.n+col;
-    copy_stripe<tk/F::group*tn>(dst.scales,static_cast<uint16_t const*>(c.metadata)+meta,c.n);
-    if constexpr(Q!=8)
-        copy_stripe<tk/F::group*tn>(dst.zeros,static_cast<uint16_t const*>(c.zero)+meta,c.n);
+    if constexpr(Packed) {
+        static_assert(Q!=8 && tk==256);
+        using U=PackedUnit<Q>;
+        if(threadIdx.x<tn) {
+            int n=threadIdx.x;
+            auto p=static_cast<uint8_t const*>(c.metadata)+U::offset(kbase/tk,c.n,col+n);
+            U::template publish<T>(p,dst.scales+n,dst.zeros+n,tn);
+        }
+    } else {
+        auto meta=kbase/F::group*c.n+col;
+        copy_stripe<tk/F::group*tn>(dst.scales,static_cast<uint16_t const*>(c.metadata)+meta,c.n);
+        if constexpr(Q!=8)
+            copy_stripe<tk/F::group*tn>(dst.zeros,static_cast<uint16_t const*>(c.zero)+meta,c.n);
+    }
 }
 
 template<int Q,class T,bool GPTQ>
@@ -74,8 +85,9 @@ CUTLASS_DEVICE T weight(Stage<Q> const& s,int n,int k) {
     }
 }
 
-template<int Q,class T,bool GPTQ>
-__global__ __launch_bounds__(threads) void kernel(qk_call_v1 c) {
+template<int Q,class T,bool GPTQ,bool Packed>
+CUTLASS_DEVICE void mainloop(qk_call_v1 const& c) {
+    static_assert(!(GPTQ && Packed));
     extern __shared__ __align__(128) uint8_t memory[];
     auto& mem=*reinterpret_cast<Storage<Q>*>(memory);
     RowTile tile=row_tile(blockIdx.x,c.m,c.experts,c.offsets_device);
@@ -87,10 +99,10 @@ __global__ __launch_bounds__(threads) void kernel(qk_call_v1 c) {
     using Traits=cute::MMA_Traits<Atom>;
     static_assert(adjacent_k_pairs<typename Traits::BLayout>(), "a packed pair must be (n,k), (n,k+1)");
     float acc[8]{};
-    stage(mem.pipe[0],c,tile,col,0);load::cp_async_commit();
+    stage<T,Packed>(mem.pipe[0],c,tile,col,0);load::cp_async_commit();
     for(int it=0;it<c.k/tk;++it) {
         if(it+1<c.k/tk) {
-            stage(mem.pipe[(it+1)%2],c,tile,col,(it+1)*tk);
+            stage<T,Packed>(mem.pipe[(it+1)%2],c,tile,col,(it+1)*tk);
             load::cp_async_commit();load::cp_async_wait<1>();
         } else {
             load::cp_async_wait<0>(); // drain the last populated stage, including one-block K
@@ -126,4 +138,8 @@ __global__ __launch_bounds__(threads) void kernel(qk_call_v1 c) {
         }
     }
 }
+template<int Q,class T,bool GPTQ>
+__global__ __launch_bounds__(threads) void kernel(qk_call_v1 c) {mainloop<Q,T,GPTQ,false>(c);}
+template<int Q,class T>
+__global__ __launch_bounds__(threads) void fq_kernel(qk_call_v1 c) {mainloop<Q,T,false,true>(c);}
 } // namespace quactlize::dense::warpk::multi

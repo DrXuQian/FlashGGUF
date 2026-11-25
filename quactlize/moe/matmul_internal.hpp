@@ -24,7 +24,7 @@ struct Plan {
     uint64_t src=0,dst=0,offsets=0,inverse=0,counts=0,active=0,count=0;
     uint64_t route=0,input=0,output=0,status=0,kernel=0,kernel_bytes=0;
     uint64_t scale=0,zero=0,plane_bytes=0;
-    bool warpk=false;
+    int warpk_route=-1; // automatic; explicit alternatives use QUACTLIZE_MOE_*_TC
     ~Plan();
 };
 struct Context {

@@ -72,10 +72,11 @@ int quactlize_ppu_dense_prepare_v1(void* context,quactlize_ppu_dense_params_v1 c
 // Explicit initialization candidates; default prepare_v1 is unchanged. This
 // is not an instruction to change production routing or a measured-win claim.
 // kind: 0=TC, 1=generic SIMT, 2=existing selected Q4 reader, 3=full BF16,
-// 4=build-time PPU1.0 Q8_0/Q2_K..Q6_K SF warp-K. For 4: route=1,
+// 4=SF warp-K (route=1), 5=FQ warp-K (route=0, packed units in-kernel).
+// Both optional PPU1.0 candidates cover Q8_0/Q2_K..Q6_K.
 // native_f16=1 for F16 compute, 0 for BF16 compute,
 // split=1, dequant_config=-1, all other recipe fields zero. Explicit only.
-enum { QUACTLIZE_DENSE_CANDIDATE_SF_WARPK=4 };
+enum { QUACTLIZE_DENSE_CANDIDATE_SF_WARPK=4, QUACTLIZE_DENSE_CANDIDATE_FQ_WARPK=5 };
 // route: 0=FQ, 1=SF, 3=full (same public route values as above).
 // TC fields describe the exact compiled parent and runtime recipe; SIMT uses
 // variant/columns/warps/values/split. Unused fields must be zero, except
