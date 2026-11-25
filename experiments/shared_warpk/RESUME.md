@@ -1,14 +1,57 @@
 # Shared warp-K: what to build and what the result means
 
 The ordinary FlashGGUF build, llama wiring and automatic winner tables are
-unchanged. To build the opt-in **dense and grouped SF** warp-K in the same public DSO:
+unchanged. To build the opt-in **dense and grouped SF/FQ** warp-K in the same public DSO:
 
 ```bash
 git submodule update --init third_party/actlize third_party/flashquant
 bash build.sh --library --with-warpk --arch ppu_10 --output /path/to/fresh/package
 ```
 
-## New: all canonical SF formats
+## FQ: original units, same warp-K mainloop
+
+From this checkout on an idle PPU1.0:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash experiments/shared_warpk/box.sh --fq
+```
+
+For correctness **and** a bounded Asys comparison in the same invocation:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 WARPK_BENCH=1 TRACE_Q=14 TRACE_OP=moe-down TRACE_M="1 2 4 8" \
+  bash experiments/shared_warpk/box.sh --fq
+```
+
+Public dense: candidate **kind 5, route 0**, split=1, dequant_config=-1,
+native_f16 matching compute. Public MoE: `quactlize_ppu_moe_matmul_prepare_fq_warpk_v1`.
+Prepared native16: `quactlize_ppu_warpk_prepare_fq_v2` with **canonical units**
+as metadata, zero=NULL, followed by existing run_v2/destroy_v2. Retains
+ordinary adapters and MoE GPU routing, but no global SF planes or expansion
+kernel. Per K256 tile, one lane per column decodes only its current superblock
+into the CTA's stage (including the 2-byte-aligned second Q3/Q6 share).
+FP16/BF16 use production FQ field/sign/rounding decoders. GPTQ remains SF only.
+Q8's original FP16 d already needs no prepass, so FQ and SF use **the same**
+Q8 device body; do not double count it. No default routing changes.
+
+`WARPK_FQ_PASS` requires 10 host unit/rounding tests and 40 PPU test cases
+(public dense/grouped M ranges, GGUF byte-oracle witnesses, alias checks,
+changed-ID/offset graph replay and exact workspace difference). The `--fq`
+benchmark uses all six orders of auto/SF/FQ; on Q8 only auto vs the shared
+body. `routes` names the order of medians and trace rotations. The public
+shape here is a screen, not a guarantee about a real model. Never reuse an
+SF-only package for this flag. The results are in `review.tgz`; Asys stays local.
+
+Local evidence: PPU1.0 SDK 2.1.1 built and verified public code `1b575ed8`
+(DSO SHA-256 `c29470502f307fe039aa9c3141f6bd6a24c64548de998ef37e3af2b1865747d7`).
+All ten new packed-unit FQ bodies emit the expected F16/BF16 FP32-accumulator
+MMA and native A loads (144–238 VREG, zero stack). Ten host raw-unit/rounding
+checks passed; the forty new PPU tests have not run locally. The compiler did
+not emit byte-identical existing SF bodies after factoring out the common
+mainloop: remeasure auto/SF/FQ in this binary; keep the 70a97881 package
+separate if investigating old/new SF performance. No timings admitted.
+
+## All canonical SF formats
 
 On one free PPU1.0 (ZW810 / ZW810E) in this checkout, with the SDK already installed:
 

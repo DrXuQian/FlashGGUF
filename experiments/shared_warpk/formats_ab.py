@@ -1,4 +1,4 @@
-"""One Asys trace per q/projection/M: two warmed rotations, automatic first.
+"""One Asys trace per q/projection/M, one warmed rotation per arm, automatic first.
 
 Separate event samples alternate arms and include the complete public call.
 No selector changes, and no machine-independent speed claims.
@@ -7,6 +7,7 @@ import argparse
 import ctypes as C
 from contextlib import ExitStack
 import json
+from itertools import permutations
 import math
 import os
 from pathlib import Path
@@ -56,7 +57,8 @@ def run(args):
                 row,wt = x16[t,s%ch],w[ids[t,s]].astype('f8')
                 gold[t,s] = row@wt.T; denom[t,s] = np.abs(row)@np.abs(wt).T
         prep = st.enter_context(projection(public,a,q,n,k,m,arr,sz,experts=e,topk=topk,channels=ch,bf=bf))
-        arms=[[],[]];names=[];workspace=0
+        routes=(['auto','fq'] if q==8 else ['auto','sf','fq']) if args.with_fq else ['auto','sf']
+        arms=[[] for _ in routes];names=[];workspace=0
         for j in range(ring):
             planes=[]
             for source, size in zip(original,(sz.low_bytes,sz.high_bytes,sz.units_bytes)):
@@ -65,8 +67,8 @@ def run(args):
                     checked(sdk.lib.hggcMemcpy(dst.ptr,source,size,3),'duplicate immutable plane D2D')
                     planes.append(dst.ptr)
                 else: planes.append(source)
-            for i in range(2):
-                info,launch = prep(planes,bool(i));arms[i].append(launch)
+            for i,arm_route in enumerate(routes):
+                info,launch = prep(planes,arm_route);arms[i].append(launch)
                 if j==0: names.append(info.config.decode())
                 assert names[i]==info.config.decode()
                 workspace=max(workspace,info.workspace_bytes)
@@ -83,6 +85,8 @@ def run(args):
                 compare(np.frombuffer(out.bytes(),'f4').reshape(gold.shape),gold,denom)
         manifest=json.loads((package/'manifest.json').read_text())
         report=dict(q=q,projection=mode,m=m,n=n,k=k,experts=e,topk=topk,active_experts=int(active),
+                    expert_rows=np.bincount(ids.ravel(),minlength=e).tolist(),routes=routes,
+                    q8_fq_shares_sf_body=q==8,
                     source_commit=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip(),
                     package_commit=manifest['build_info']['source_revision'],
                     package_sha256=sha(package/'libncp_quactlize.so'),sdk_release=manifest['build_info']['sdk_release'],
@@ -96,12 +100,13 @@ def run(args):
                 return 0
             with ExitStack() as gs:
                 graphs=[]
-                for i in range(2):
+                for i in range(len(arms)):
                     g=Replay(sdk,stream,lambda i=i:launch(i),1);graphs.append(g);gs.callback(g.close)
                 gs.callback(a.sync)
-                samples=[[],[]]
+                samples=[[] for _ in arms]
+                orders=list(permutations(range(len(arms))))
                 for r in range(6):
-                    for i in ((0,1) if r%2==0 else (1,0)):
+                    for i in orders[r%len(orders)]:
                         checked(graphs[i](),'prime complete rotation')
                         checked(sdk.lib.hggcEventRecord(begin,stream),'begin')
                         checked(graphs[i](),'whole-call rotation')
@@ -111,8 +116,10 @@ def run(args):
                         if not math.isfinite(ms.value) or ms.value<=0:raise ValueError('invalid elapsed time')
                         samples[i].append(ms.value*1000/ring)
                 med=list(map(statistics.median,samples))
-                report['rows'].append(dict(cache='rotating' if rotated else 'same-address',samples_us=samples,
-                    median_us=med,delta_pct=(med[1]/med[0]-1)*100))
+                row=dict(cache='rotating' if rotated else 'same-address',samples_us=samples,
+                         median_us=med,delta_pct_vs_auto={s:100*(v/med[0]-1) for s,v in zip(routes,med)})
+                if len(routes)==2:row['delta_pct']=(med[1]/med[0]-1)*100
+                report['rows'].append(row)
                 if rotated and args.profiler:
                     checked(graphs[0](),'prime trace');a.sync()
                     checked(sdk.lib.hggcProfilerStart(),'begin Asys')
@@ -121,7 +128,7 @@ def run(args):
                         a.sync()
                     finally: checked(sdk.lib.hggcProfilerStop(),'end Asys')
         args.output.write_text(json.dumps(report,indent=2)+'\n')
-        print('WARPK_FORMAT_AB',mode,q,m,'median_us(auto,warpk)=',
+        print('WARPK_FORMAT_AB',mode,q,m,'median_us('+','.join(routes)+')=',
               [row['median_us'] for row in report['rows']],flush=True)
 
 
@@ -131,4 +138,5 @@ if __name__=='__main__':
     p.add_argument('--mode',choices=('dense','moe-gate','moe-down'),required=True)
     p.add_argument('--m',type=int,choices=(1,2,3,4,5,6,7,8,9,16,17,128),default=1)
     p.add_argument('--profiler',action='store_true');p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--with-fq',action='store_true',help='compare auto/SF/FQ; Q8 has one shared warp-K body')
     run(p.parse_args())

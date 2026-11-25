@@ -26,26 +26,30 @@ def projection(public, arena, q, n, k, m, arr, sizes, *, experts=1, topk=1,
         if grouped:
             p = moe.Params(1, C.sizeof(moe.Params), q, n, k, experts, m, topk, channels, 0,
                            in_stride, token_stride, ids_stride, out_stride, arr, sizes)
-            forced = bind(public.lib, 'quactlize_ppu_moe_matmul_prepare_warpk_v1', api.prepare.argtypes)
         else:
             p = dense.Params(1, C.sizeof(dense.Params), q, n, k, m, in_stride, out_stride, arr, sizes)
-            spec = dense.Candidate(1, C.sizeof(dense.Candidate), 4, 1, int(not bf), 0, -1)
-            spec.split = 1
 
-        def prepare(planes, candidate):
+        def prepare(planes, route):
+            if route not in ('auto','sf','fq'):
+                raise ValueError('unknown projection route: '+str(route))
             kind = moe.Info if grouped else dense.Info
             info, handle = kind(1, C.sizeof(kind)), C.c_void_p()
             args = (ctx, C.byref(p), *planes)
             tail = (C.byref(handle), C.byref(info))
-            if not candidate:
+            if route=='auto':
                 rc = api.prepare(*args, *tail)
             elif grouped:
+                name='prepare_fq_warpk_v1' if route=='fq' else 'prepare_warpk_v1'
+                forced=bind(public.lib,'quactlize_ppu_moe_matmul_'+name,api.prepare.argtypes)
                 rc = forced(*args, *tail)
             else:
+                spec=dense.Candidate(1,C.sizeof(dense.Candidate),5 if route=='fq' else 4,
+                                     int(route=='sf'),int(not bf),0,-1);spec.split=1
                 rc = api.candidate(*args, C.byref(spec), *tail)
             api.check(rc)
-            if candidate:
-                assert b'warpk' in info.config and info.route == 1 and info.split == 1
+            if route!='auto':
+                assert b'warpk' in info.config and info.config.startswith(route.encode()+b':')
+                assert info.route == int(route=='sf') and info.split == 1
 
             def launch(a, ids, c, ws, stream):
                 args = (handle, a, ids, c) if grouped else (handle, a, c)

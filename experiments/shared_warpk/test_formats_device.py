@@ -53,15 +53,20 @@ def oracle(y, x, owners, w, bf, exact):
             compare(y[match], want if bf else round_compute(want, dt), np.abs(a) @ np.abs(b).T)
 
 
-def public_case(sdk, public, q, n, k, m, weights, *, bf, experts, channels, topk=None):
+def public_case(sdk, public, q, n, k, m, weights, *, bf, experts, channels, topk=None, candidate='sf'):
     arr, sizes, planes, w = weights
     if topk is None:
         topk = 1 if experts == 1 else 2
     # Both group modes see strided A/IDs/C. Padding is poisoned on input and checked on output.
     with Arena(sdk) as a, projection(public, a, q, n, k, m, arr, sizes,
             experts=experts, topk=topk, channels=channels, bf=bf, padded=True) as prepare, ExitStack() as graph_stack:
-        info, submit = prepare(planes, True)
+        info, submit = prepare(planes, candidate)
         assert info.compute_type == int(bf)
+        if candidate=='fq':
+            # Same endpoints and row routing; only SF needs expanded planes.
+            cmp, _ = prepare(planes,'sf')
+            delta = 0 if q==8 else 4*experts*n*(k//arr.group_size)
+            assert cmp.workspace_bytes-info.workspace_bytes==delta
         ws = a.buffer(info.workspace_bytes)
         stream = a.stream()
         inp = a.buffer(m * (channels+1 if experts > 1 else 1) * (k+4) * 4)

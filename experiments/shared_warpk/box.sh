@@ -5,7 +5,8 @@ mode=all
 case "$#:${1:-}" in
     0:) ;;
     1:--formats) mode=formats ;;
-    *) echo 'Usage: bash experiments/shared_warpk/box.sh [--formats]' >&2; exit 2 ;;
+    1:--fq) mode=fq ;;
+    *) echo 'Usage: bash experiments/shared_warpk/box.sh [--formats|--fq]' >&2; exit 2 ;;
 esac
 root=$(git rev-parse --show-toplevel)
 cd "${root:?}"
@@ -26,18 +27,31 @@ if [[ -z ${QUACTLIZE_CI_PACKAGE:-} ]]; then
     export QUACTLIZE_CI_PACKAGE="$run/package"
     bash build.sh --library --with-warpk --arch ppu_10 --sdk "$sdk" --output "$QUACTLIZE_CI_PACKAGE" --jobs "${JOBS:-8}"
 fi
-"$py" -c 'import json,os;from pathlib import Path
+"$py" -c 'import json,os,sys;from pathlib import Path
 w=json.loads((Path(os.environ["QUACTLIZE_CI_PACKAGE"])/"manifest.json").read_text()).get("warpk",{})
 if not w.get("multiformat") or set(w["qtypes"])!={8,10,11,12,13,14}:
-    raise SystemExit("build this branch with --with-warpk; the package is missing the multi-format candidate")'
+    raise SystemExit("build this branch with --with-warpk; the package is missing the multi-format candidate")
+if sys.argv[1] in ("fq","all") and "gguf-fq" not in w.get("styles",[]):
+    raise SystemExit("FQ not in package: unset QUACTLIZE_CI_PACKAGE and rebuild this branch")' "$mode"
 obj="${QUACTLIZE_CI_PACKAGE}.build/warpk_sf.o"
 if [[ -f "$obj" ]]; then
-    "$py" experiments/shared_warpk/isa.py "$sdk/bin/hgobjdump" "$obj" >"$run/isa.json"
+    isa_args=()
+    if [[ $mode == formats ]]; then isa_args+=(--allow-legacy-sf-only); fi
+    "$py" experiments/shared_warpk/isa.py "$sdk/bin/hgobjdump" "$obj" "${isa_args[@]}" >"$run/isa.json"
 fi
-QUACTLIZE_CI_SUITE=accuracy "$py" -m pytest -qx --confcutdir=experiments/shared_warpk \
-    tests/test_warpk_formats.py experiments/shared_warpk/test_formats_device.py --junitxml="$run/formats.xml"
-echo "WARPK_FORMATS_PASS q=8,10,11,12,13,14 modes=dense,grouped output=$run performance_admitted=false"
-if [[ $mode == formats ]]; then
+if [[ $mode != fq ]]; then
+    QUACTLIZE_CI_SUITE=accuracy "$py" -m pytest -qx --confcutdir=experiments/shared_warpk \
+        tests/test_warpk_formats.py experiments/shared_warpk/test_formats_device.py --junitxml="$run/formats.xml"
+    echo "WARPK_FORMATS_PASS q=8,10,11,12,13,14 modes=dense,grouped output=$run performance_admitted=false"
+fi
+bench_args=()
+if [[ $mode != formats ]]; then
+    QUACTLIZE_CI_SUITE=accuracy "$py" -m pytest -qx --confcutdir=experiments/shared_warpk \
+        tests/test_warpk_fq.py experiments/shared_warpk/test_fq_device.py --junitxml="$run/fq.xml"
+    echo "WARPK_FQ_PASS q=8,10,11,12,13,14 modes=dense,grouped output=$run performance_admitted=false"
+    bench_args+=(--with-fq)
+fi
+if [[ $mode != all ]]; then
     if [[ ${WARPK_BENCH:-0} == 1 ]]; then
         for q in ${TRACE_Q:-8 10 11 12 13 14}; do
             for op in ${TRACE_OP:-dense moe-gate moe-down}; do
@@ -46,7 +60,7 @@ if [[ $mode == formats ]]; then
                     "$sdk/asight/bin/asys" profile -t hggc --sample none --python-sampling false \
                         --capture-range hggcProfilerApi --capture-range-end merge --kill none --wait primary \
                         -f false -o "$prefix" "$py" experiments/shared_warpk/formats_ab.py \
-                        --q "$q" --mode "$op" --m "$m" --profiler --output "$prefix.json"
+                        --q "$q" --mode "$op" --m "$m" --profiler "${bench_args[@]}" --output "$prefix.json"
                     test -s "$prefix.asysrep"
                 done
             done
@@ -54,7 +68,7 @@ if [[ $mode == formats ]]; then
         echo "WARPK_FORMATS_AB_DONE output=$run"
     fi
     # XML + compact JSON only. The original Asys reports stay on the box.
-    ( cd "$run"; shopt -s nullglob; tar -czf review.tgz formats.xml *.json )
+    ( cd "$run"; shopt -s nullglob; tar -czf review.tgz *.xml *.json )
     echo "review=$run/review.tgz"
     exit 0
 fi
